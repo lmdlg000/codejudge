@@ -4,7 +4,7 @@
  * 登录成功 toast 与回跳跟 SIGNED_IN 事件，不跟调用时机）。
  */
 import { ref, computed } from 'vue'
-import { supabase, authMode } from '../api/supabase.js'
+import { supabase, authMode, siteRootUrl } from '../api/supabase.js'
 import { getHealth } from '../api/client.js'
 
 const session = ref(null)
