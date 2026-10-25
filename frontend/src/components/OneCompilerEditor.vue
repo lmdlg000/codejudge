@@ -30,6 +30,13 @@ const EMBED_SRC =
 let pendingResolve = null
 let pendingTimer = null
 
+/**
+ * 回声防护：iframe → 父级的代码回传只更新父级状态，**绝不**再 populate 回去，
+ * 否则粘贴/输入会被 populateCode 重置编辑器（光标跳动、粘贴中断的“抽风”）。
+ */
+let lastFromIframe = null
+let pendingPopulate = null
+
 function post(obj) {
   const w = frameEl.value && frameEl.value.contentWindow
   if (!w) return false
@@ -77,9 +84,10 @@ function onMessage(e) {
   const d = e.data
   if (!d || typeof d !== 'object') return
   if (d.language && d.files) {
-    // 代码对象回传：同步最新代码（取第一个文件内容）
+    // 代码对象回传：同步最新代码（取第一个文件内容），标记来源为 iframe（防回声）
     ready.value = true
     const content = (d.files[0] && d.files[0].content) || ''
+    lastFromIframe = content
     if (content !== props.modelValue) emit('update:modelValue', content)
     // 带 result 的回传：resolve 等待中的 runWithStdin
     if (d.result && pendingResolve) {
@@ -101,8 +109,13 @@ function onMessage(e) {
 watch(
   () => props.modelValue,
   (v) => {
-    // 外部重置（如切换示例）时同步进编辑器
-    if (ready.value && v != null) populate(v)
+    if (!ready.value || v == null) return
+    if (v === lastFromIframe) return // 回声跳过：改动源自 iframe，不回推
+    // 外部改动（载入示例/重置）：合并 250ms 再推送，避免连续注入打断输入
+    clearTimeout(pendingPopulate)
+    pendingPopulate = setTimeout(() => {
+      populate(props.modelValue)
+    }, 250)
   }
 )
 
@@ -110,6 +123,7 @@ onMounted(() => window.addEventListener('message', onMessage))
 onBeforeUnmount(() => {
   window.removeEventListener('message', onMessage)
   clearTimeout(pendingTimer)
+  clearTimeout(pendingPopulate)
 })
 </script>
 

@@ -41,3 +41,18 @@ export function siteRootUrl() {
   }
   return origin + (base.startsWith('.') ? '/' : base)
 }
+
+/**
+ * 每次 API 调用前现取有效 access_token（getSession 自动换票）。
+ * 绝不缓存内存旧令牌：后台标签页定时器被节流时旧令牌会过期，
+ * 发出去必 401，再被误判为“登录过期”而登出。
+ */
+export async function freshAccessToken() {
+  if (!supabase) return null
+  try {
+    const { data } = await supabase.auth.getSession()
+    return data && data.session ? data.session.access_token : null
+  } catch {
+    return null
+  }
+}

@@ -153,8 +153,8 @@ export function initAuth(deps = {}) {
     user.value = s ? s.user : null
 
     if (event === 'TOKEN_REFRESH_FAILED') {
-      // 换票失败：坏会话，立即本地清理
-      clearBrokenSession('refresh_failed')
+      // 换票失败 ≠ 会话无效（网络抖动/限流也会触发）：先验证，确认失效才清
+      validateSession()
       return
     }
 
@@ -192,9 +192,9 @@ export function initAuth(deps = {}) {
       /* 后端不可达时不降级，保持 env 判定 */
     })
 
-  // API 层 401 广播 → 统一清理坏会话（止住换票风暴并提示重新登录）
+  // API 层 401 广播 → 验证后决定：确认会话失效才清理（防误登出）
   window.addEventListener(AUTH_EXPIRED_EVENT, () => {
-    if (session.value) clearBrokenSession('api_401')
+    if (session.value) validateSession()
   })
 }
 

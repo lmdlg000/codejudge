@@ -5,7 +5,7 @@
  * 裁决：POST {SUPABASE_URL}/functions/v1/admin-review → human_reviewed_pass | human_reviewed_fail
  * 状态：Supabase Realtime（postgres_changes on submissions）推送，零轮询零刷新。
  */
-import { supabase } from './supabase.js'
+import { supabase, freshAccessToken } from './supabase.js'
 import { ApiError, ERROR_HINTS } from './errors.js'
 
 function functionsBase() {
@@ -13,9 +13,36 @@ function functionsBase() {
   return `${url}/functions/v1`
 }
 
+function sendFunction(name, payload, token) {
+  return fetch(`${functionsBase()}/${name}`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json; charset=utf-8',
+      // 新一代凭证体系：Edge Function 只读 Authorization（用户 JWT）；勿带 apikey 头
+      Authorization: `Bearer ${token}`
+    },
+    body: JSON.stringify(payload)
+  })
+}
+
+/** 解析错误体：自有统一错误体 {error:{code,message}} 优先用 message；平台网关形 {code,message} 归并中文提示 */
+function errorFromBody(body, status) {
+  const wrapped = body && body.error
+  const e = wrapped || body || {}
+  let code = e.code || 'INTERNAL_ERROR'
+  if (wrapped) {
+    // 自有统一错误体：message 为权威中文提示
+    return new ApiError(code, e.message || (ERROR_HINTS[code] || ERROR_HINTS.INTERNAL_ERROR).hint, status)
+  }
+  if (!ERROR_HINTS[code] && /UNAUTHORIZED/i.test(code)) code = 'UNAUTHORIZED'
+  const hint = ERROR_HINTS[code] && ERROR_HINTS[code].hint
+  return new ApiError(code, hint || e.message || ERROR_HINTS.INTERNAL_ERROR.hint, status)
+}
+
 async function callFunction(name, payload, token) {
-  // 无有效登录态：本地直接拦截（绝不发 "Bearer null" 的假请求制造 401 噪音）
-  if (!token) {
+  // 每次现取活令牌（getSession 自动换票）；旧的入参令牌仅作兜底
+  const t = (await freshAccessToken()) || token
+  if (!t) {
     try {
       window.dispatchEvent(new Event('codejudge-auth-expired'))
     } catch {
@@ -25,17 +52,19 @@ async function callFunction(name, payload, token) {
   }
   let res
   try {
-    res = await fetch(`${functionsBase()}/${name}`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json; charset=utf-8',
-        // 新一代凭证体系：Edge Function 只读 Authorization（用户 JWT）；勿带 apikey 头
-        Authorization: `Bearer ${token}`
-      },
-      body: JSON.stringify(payload)
-    })
+    res = await sendFunction(name, payload, t)
   } catch {
     throw new ApiError('NETWORK_ERROR', ERROR_HINTS.NETWORK_ERROR.hint, 0)
+  }
+  // 401：先强制换票重试一次（令牌过期是常态，不该直接判死会话）
+  if (res.status === 401 && supabase) {
+    try {
+      const { data } = await supabase.auth.refreshSession()
+      const nt = data && data.session && data.session.access_token
+      if (nt) res = await sendFunction(name, payload, nt)
+    } catch {
+      /* 换票失败：走下面的 401 处理 */
+    }
   }
   const text = await res.text()
   let body = null
@@ -47,20 +76,15 @@ async function callFunction(name, payload, token) {
     }
   }
   if (!res.ok) {
-    const code = body && body.error && body.error.code ? body.error.code : 'INTERNAL_ERROR'
-    const message =
-      body && body.error && body.error.message
-        ? body.error.message
-        : (ERROR_HINTS[code] || ERROR_HINTS.INTERNAL_ERROR).hint
     if (res.status === 401) {
-      // 会话失效/过期：广播清理，阻止后续请求继续 401
+      // 重试后仍 401：广播会话复核（确认失效才登出，见 useAuth.validateSession）
       try {
         window.dispatchEvent(new Event('codejudge-auth-expired'))
       } catch {
         /* ignore */
       }
     }
-    throw new ApiError(code, message, res.status)
+    throw errorFromBody(body, res.status)
   }
   return body
 }
