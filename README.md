@@ -120,23 +120,22 @@ supabase 模式的提交走 **Edge Function 异步评分**（本地模式仍为 
 
 配置完成后按 6 步人工验收：①邮箱注册登录 ②GitHub 登录回跳 ③登录后提交 `synced:true` ④Supabase Table Editor 看到行且 user_id 正确 ⑤换第二账号验证 RLS 隔离 ⑥清 env 重建回退本地模式可用。
 
-## GitHub Pages 部署（预留）
+## GitHub Pages 部署
 
-本机全栈是默认形态；若将来把**前端**放到 GitHub Pages 等静态托管（后端需另找服务托管，静态托管跑不了判题）：
+流水线已内置（`.github/workflows/deploy-pages.yml`）：push `main` 自动构建并发布。启用步骤：
 
-```bash
-cd frontend
-VITE_ROUTER_MODE=hash VITE_API_BASE=https://your-api-host \
-VITE_SUPABASE_URL=https://<project-ref>.supabase.co VITE_SUPABASE_PUBLISHABLE_KEY=sb_publishable_… \
-npm run build
-# 把 dist/ 发布到 gh-pages 分支即可
-```
+1. **开启 Pages**：仓库 Settings → Pages → Build and deployment → Source 选 **GitHub Actions**（一次性）。
+2. **配置 Secrets**：Settings → Secrets and variables → Actions，按需添加——
+   | Secret | 必填 | 说明 |
+   |---|---|---|
+   | `VITE_SUPABASE_URL` | 云模式必填 | `https://<project-ref>.supabase.co` |
+   | `VITE_SUPABASE_PUBLISHABLE_KEY` | 云模式必填 | `sb_publishable_…` |
+   | `VITE_API_BASE` | 选填 | 自托管 FastAPI 源（不带 `/api` 后缀）；不配则纯 Supabase 模式 |
+3. **推送触发**：`git push`（或 Actions 页手动 Run workflow）→ 站点发布到 `https://lmdlg000.github.io/codejudge/`。
+4. **Supabase 回跳配置**：Site URL = `https://lmdlg000.github.io/codejudge/`，Redirect URLs 追加同值 + `http://localhost:5173`（**严禁写 `#/`**，OAuth 回跳靠 `detectSessionInUrl` 吸收令牌）。
+5. **配套部署**（云模式完整能力）：按 `supabase/README.md` 部署 `judge` / `admin-review` Edge Functions 并配 `UAPI_ACCESS_TOKEN` 等 secrets。
 
-- `base: './'` 已内置（任意子路径可托管）；
-- `VITE_ROUTER_MODE=hash` 切 hash 路由（静态托管无 history 回退）；默认 history（本地 FastAPI 托管时最干净）；
-- `VITE_API_BASE` 指向后端源（含协议与端口，不带 `/api` 后缀）；缺省同源；
-- Supabase 后台：Site URL = `https://<user>.github.io/<repo>/`，Redirect URLs 加 Site URL + `http://localhost:5173` + `http://127.0.0.1:5173`（**严禁写 `#/`**，OAuth 回跳靠 `detectSessionInUrl` 吸收令牌）；
-- GitHub Pages 只托管静态前端：判题 API 须另找 HTTPS 托管（FastAPI），后端 `.env` 同步配好 `JUDGE_CORS_ORIGINS`（Pages 域名）。
+构建内置保障：`base:'./'`（任意子路径可托管）、`VITE_ROUTER_MODE=hash`（静态托管无 history 回退）、题库静态打包（无 FastAPI 也能出题面）。未配 Supabase secrets 时站点降级为只读演示（题目可看，提交需云模式）。
 
 ## 判定与计分
 

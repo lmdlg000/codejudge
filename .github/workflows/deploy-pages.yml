@@ -1,0 +1,55 @@
+# GitHub Pages 部署：push main → 构建前端（hash 路由 + Secrets 注入）→ 发布静态站
+# 一次性前置：仓库 Settings → Pages → Source 选「GitHub Actions」
+name: Deploy to GitHub Pages
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      # prebuild 钩子自动生成 frontend/src/data/problems.json（题库静态打包，无 FastAPI 也能出题面）
+      - name: Build (hash router for GitHub Pages)
+        working-directory: frontend
+        env:
+          VITE_ROUTER_MODE: hash
+          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+          VITE_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.VITE_SUPABASE_PUBLISHABLE_KEY }}
+          VITE_API_BASE: ${{ secrets.VITE_API_BASE }}
+        run: |
+          npm ci
+          npm run build
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: frontend/dist
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
