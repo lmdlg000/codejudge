@@ -4,7 +4,7 @@
 //
 // 部署：supabase functions deploy admin-review
 import { createClient } from "npm:@supabase/supabase-js@2";
-import { apiError, corsHeaders, json, readJson } from "../_shared/util.ts";
+import { apiError, corsHeaders, json, readJson, supabasePublishableKey, supabaseSecretKey } from "../_shared/util.ts";
 
 Deno.serve(async (req: Request) => {
   if (req.method === "OPTIONS") {
@@ -18,11 +18,17 @@ Deno.serve(async (req: Request) => {
     const authHeader = req.headers.get("Authorization") ?? "";
     const jwt = authHeader.replace(/^Bearer\s+/i, "");
     const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
-    const publishable =
-      Deno.env.get("SUPABASE_PUBLISHABLE_KEY") ?? Deno.env.get("SUPABASE_ANON_KEY") ?? "";
-    const secret = Deno.env.get("SUPABASE_SECRET_KEY") ?? "";
-    if (!jwt || !supabaseUrl || !publishable || !secret) {
+    const publishable = supabasePublishableKey();
+    const secret = supabaseSecretKey();
+    if (!jwt) {
       return apiError("UNAUTHORIZED", "请先登录（登录状态可能已过期）", 401);
+    }
+    if (!supabaseUrl || !publishable || !secret) {
+      return apiError(
+        "ENGINE_UNAVAILABLE",
+        "服务端未正确配置 Supabase 密钥（SUPABASE_PUBLISHABLE_KEYS / SUPABASE_SECRET_KEYS），请检查 Edge Secrets 后重新部署",
+        503,
+      );
     }
 
     // 1. 鉴权

@@ -16,6 +16,8 @@ import {
   normalizeSubmission,
   PayloadError,
   readJson,
+  supabasePublishableKey,
+  supabaseSecretKey,
 } from "../_shared/util.ts";
 import { runSamples, caseToSampleResult, type RunnerRun } from "../_shared/uapi.ts";
 import { gradeInBackground } from "../_shared/scoring.ts";
@@ -33,10 +35,17 @@ Deno.serve(async (req: Request) => {
     const authHeader = req.headers.get("Authorization") ?? "";
     const jwt = authHeader.replace(/^Bearer\s+/i, "");
     const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
-    const publishable =
-      Deno.env.get("SUPABASE_PUBLISHABLE_KEY") ?? Deno.env.get("SUPABASE_ANON_KEY") ?? "";
-    if (!jwt || !supabaseUrl || !publishable) {
+    const publishable = supabasePublishableKey();
+    if (!jwt) {
       return apiError("UNAUTHORIZED", "请先登录（登录状态可能已过期）", 401);
+    }
+    if (!supabaseUrl || !publishable) {
+      // 新密钥体系：平台注入的是 SUPABASE_PUBLISHABLE_KEYS（JSON 字典）
+      return apiError(
+        "ENGINE_UNAVAILABLE",
+        "服务端未正确配置 Supabase 密钥（SUPABASE_PUBLISHABLE_KEYS），请检查 Edge Secrets 后重新部署",
+        503,
+      );
     }
     const { data: userData, error: userErr } = await createClient(supabaseUrl, publishable, {
       global: { headers: { Authorization: authHeader } },
@@ -47,22 +56,24 @@ Deno.serve(async (req: Request) => {
     }
     const user = userData.user;
 
-    // ---- 2. 校验提交体 ----
+    // ---- 2. 配置自检（必须在参数校验之前：probe 不携带代码） ----
     const body = await readJson(req);
-    const sub = normalizeSubmission(body);
-    const problemId = String(body.problem_id ?? "").slice(0, 64);
     const dryRun = body.dry_run === true;
     // 备用通道：样例未全过强制提交（前端测试 ≥10 次解锁；结果强制转人工复核）
     const forceSubmit = body.force_submit === true;
-    // 配置自检：不执行任何代码，只回报各密钥是否已配置（供前端「配置自检」面板）
     if (body.probe === true) {
       return json({
         probe: true,
         uapi_configured: !!Deno.env.get("UAPI_ACCESS_TOKEN"),
         ai_configured: !!Deno.env.get("AI_API_KEY"),
-        secret_configured: !!Deno.env.get("SUPABASE_SECRET_KEY"),
+        secret_configured: !!supabaseSecretKey(),
+        publishable_configured: !!publishable,
       });
     }
+
+    // ---- 3. 校验提交体 ----
+    const sub = normalizeSubmission(body);
+    const problemId = String(body.problem_id ?? "").slice(0, 64);
     if (!problemId) {
       return apiError("VALIDATION_ERROR", "提交内容不合法，请检查后重试：problem_id 必填");
     }
@@ -118,9 +129,13 @@ Deno.serve(async (req: Request) => {
     }
 
     // ---- 4. 全部通过：落库即回执（status=judging） ----
-    const secret = Deno.env.get("SUPABASE_SECRET_KEY") ?? "";
+    const secret = supabaseSecretKey();
     if (!secret) {
-      return apiError("ENGINE_UNAVAILABLE", "判题引擎不可用，请检查服务端配置", 503);
+      return apiError(
+        "ENGINE_UNAVAILABLE",
+        "服务端未正确配置 Supabase 密钥（SUPABASE_SECRET_KEYS），请检查 Edge Secrets 后重新部署",
+        503,
+      );
     }
     const admin = createClient(supabaseUrl, secret, { auth: { persistSession: false } });
     const sid = newSid(problemId);

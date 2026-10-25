@@ -4,6 +4,7 @@
 //   否则（conclusive=false / 低分 / AI 失败）→ human_review_queue + status='pending_review'
 import { createClient } from "npm:@supabase/supabase-js@2";
 import type { NormalizedSubmission } from "./util.ts";
+import { supabaseSecretKey } from "./util.ts";
 import type { RunnerRun } from "./uapi.ts";
 
 const DEFAULT_AI_URL = "https://api.openai.com/v1/chat/completions";
@@ -20,7 +21,8 @@ function env(name: string, fallback = ""): string {
 }
 
 function adminClient() {
-  return createClient(env("SUPABASE_URL"), env("SUPABASE_SECRET_KEY"));
+  // 新密钥体系：SUPABASE_SECRET_KEYS（JSON 字典）自动解析（见 util.supabaseSecretKey）
+  return createClient(env("SUPABASE_URL"), supabaseSecretKey());
 }
 
 function describeRun(run: RunnerRun): string {

@@ -71,8 +71,8 @@ async function runProbe() {
     probeResult.value = res
   } catch (e) {
     probeError.value =
-      e && e.message && /必须提供显式测试样例/.test(e.message)
-        ? 'judge 函数为旧版（未含 probe）：请重新部署 supabase/functions/judge'
+      e && e.message && /必须提供显式测试样例|source_code 与 files/.test(e.message)
+        ? 'judge 函数为旧版（probe 被参数校验拦截）：请重新部署 supabase/functions/judge（新代码已修复）'
         : (e && e.message) || '探测失败'
   } finally {
     probing.value = false

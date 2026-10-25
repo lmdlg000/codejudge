@@ -184,3 +184,41 @@ export async function readJson(req: Request): Promise<any> {
     throw new PayloadError("VALIDATION_ERROR", "提交内容不合法，请检查后重试：请求体不是合法 JSON");
   }
 }
+
+/**
+ * 读取平台注入的密钥：兼容旧单数名（SUPABASE_SECRET_KEY 等）
+ * 与新密钥体系的复数 JSON 字典（SUPABASE_SECRET_KEYS / SUPABASE_PUBLISHABLE_KEYS，
+ * 形如 {"default": "sb_secret_…"} 或 {"<别名>": "sb_secret_…"}）。
+ */
+export function readKeyEnv(plural: string, ...singulars: string[]): string {
+  for (const name of singulars) {
+    const v = Deno.env.get(name);
+    if (v && v.trim()) return v.trim();
+  }
+  const raw = (Deno.env.get(plural) ?? "").trim();
+  if (!raw) return "";
+  if (!raw.startsWith("{") && !raw.startsWith("[")) return raw; // 万一是明文字符串
+  try {
+    const obj = JSON.parse(raw);
+    if (typeof obj === "string") return obj;
+    if (obj && typeof obj === "object") {
+      if (typeof obj.default === "string" && obj.default.trim()) return obj.default.trim();
+      for (const v of Object.values(obj as Record<string, unknown>)) {
+        if (typeof v === "string" && v.trim()) return v.trim();
+      }
+    }
+  } catch {
+    /* 非 JSON：忽略 */
+  }
+  return "";
+}
+
+/** 服务端 Secret（写库/管理端）：sb_secret_… */
+export function supabaseSecretKey(): string {
+  return readKeyEnv("SUPABASE_SECRET_KEYS", "SUPABASE_SECRET_KEY");
+}
+
+/** Publishable（函数内验用户 JWT 用）：sb_publishable_… */
+export function supabasePublishableKey(): string {
+  return readKeyEnv("SUPABASE_PUBLISHABLE_KEYS", "SUPABASE_PUBLISHABLE_KEY", "SUPABASE_ANON_KEY");
+}
