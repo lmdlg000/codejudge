@@ -14,14 +14,23 @@ function functionsBase() {
 }
 
 async function callFunction(name, payload, token) {
+  // 无有效登录态：本地直接拦截（绝不发 "Bearer null" 的假请求制造 401 噪音）
+  if (!token) {
+    try {
+      window.dispatchEvent(new Event('codejudge-auth-expired'))
+    } catch {
+      /* ignore */
+    }
+    throw new ApiError('UNAUTHORIZED', ERROR_HINTS.UNAUTHORIZED.hint, 401)
+  }
   let res
   try {
     res = await fetch(`${functionsBase()}/${name}`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json; charset=utf-8',
-        Authorization: `Bearer ${token}`,
-        apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY || ''
+        // 新一代凭证体系：Edge Function 只读 Authorization（用户 JWT）；勿带 apikey 头
+        Authorization: `Bearer ${token}`
       },
       body: JSON.stringify(payload)
     })
@@ -43,6 +52,14 @@ async function callFunction(name, payload, token) {
       body && body.error && body.error.message
         ? body.error.message
         : (ERROR_HINTS[code] || ERROR_HINTS.INTERNAL_ERROR).hint
+    if (res.status === 401) {
+      // 会话失效/过期：广播清理，阻止后续请求继续 401
+      try {
+        window.dispatchEvent(new Event('codejudge-auth-expired'))
+      } catch {
+        /* ignore */
+      }
+    }
     throw new ApiError(code, message, res.status)
   }
   return body
@@ -93,7 +110,12 @@ export function watchSubmission(id, onUpdate) {
       { event: 'UPDATE', schema: 'public', table: 'submissions', filter: `id=eq.${id}` },
       (payload) => onUpdate(payload.new)
     )
-    .subscribe()
+    .subscribe((status, err) => {
+      // Realtime 失败静默降级（页面已有初值渲染，不产生未处理 Promise 异常）
+      if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT' || err) {
+        /* ignore */
+      }
+    })
   return () => {
     try {
       supabase.removeChannel(channel)

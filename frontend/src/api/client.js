@@ -46,6 +46,14 @@ async function request(path, options = {}) {
     const message = body && body.error && body.error.message
       ? body.error.message
       : (ERROR_HINTS[code] || ERROR_HINTS.INTERNAL_ERROR).hint
+    if (res.status === 401) {
+      // 登录态失效（FastAPI 校验 JWT 失败）：广播清理坏会话，止住后续 401
+      try {
+        window.dispatchEvent(new Event('codejudge-auth-expired'))
+      } catch {
+        /* ignore */
+      }
+    }
     throw new ApiError(code, message, res.status)
   }
 

@@ -20,6 +20,7 @@ const modeDegraded = ref(false)
 let inited = false
 let hadSession = false
 let listeners = []
+let toastFn = null
 
 /** 生效 authMode：env 配置 且 未因两端不一致降级 */
 export const effectiveAuthMode = computed(() => authMode && !modeDegraded.value)
@@ -54,10 +55,10 @@ export function onAuthEvent(fn) {
   }
 }
 
-function emitAuth(event, s) {
+function emitAuth(event, s, reason) {
   listeners.forEach((fn) => {
     try {
-      fn(event, s)
+      fn(event, s, reason)
     } catch {
       /* 监听器异常不阻断 */
     }
@@ -66,6 +67,47 @@ function emitAuth(event, s) {
 
 /** 登录成功回跳目标（被拦截的题目页等） */
 const LOGIN_REDIRECT_KEY = 'codejudge-login-redirect'
+
+/** 会话过期事件名（API 层 401 → 全局广播 → 统一登出清理，杜绝坏会话换票风暴） */
+export const AUTH_EXPIRED_EVENT = 'codejudge-auth-expired'
+
+/**
+ * 坏会话清理：本地存的会话若已失效（过期/换票失败/撤销），
+ * autoRefreshToken 会以 ~30s 周期无限换票产生 401 风暴——
+ * 立即本地登出清存储，一次性止血。
+ */
+async function clearBrokenSession(reason) {
+  hadSession = false
+  session.value = null
+  user.value = null
+  try {
+    await supabase.auth.signOut({ scope: 'local' })
+  } catch {
+    /* 本地清理优先，服务端撤销失败不阻断 */
+  }
+  if (toastFn && reason !== 'unreachable') {
+    toastFn('登录状态已过期，请重新登录。')
+  }
+  emitAuth('SESSION_EXPIRED', null, reason)
+}
+
+/** 会话自检：恢复的会话经 getUser 验证，失效即清（网络异常不误登出） */
+async function validateSession() {
+  if (!session.value) return
+  try {
+    const { data, error } = await supabase.auth.getUser()
+    if (error) {
+      const st = error.status || 0
+      if (st === 401 || st === 403 || /jwt|token|invalid/i.test(error.message || '')) {
+        await clearBrokenSession('invalid')
+      }
+      return
+    }
+    if (!data || !data.user) await clearBrokenSession('invalid')
+  } catch {
+    /* 网络异常：保留会话，不误登出 */
+  }
+}
 
 export function rememberRedirect(path) {
   try {
@@ -95,18 +137,26 @@ export function initAuth(deps = {}) {
     return
   }
   inited = true
+  toastFn = deps.toast || null
 
-  // 启动恢复登录态
+  // 启动恢复登录态 + 坏会话自检（防 autoRefresh 无限 401）
   supabase.auth.getSession().then(({ data }) => {
     session.value = data && data.session ? data.session : null
     user.value = session.value ? session.value.user : null
     hadSession = !!session.value
     ready.value = true
+    validateSession()
   })
 
   supabase.auth.onAuthStateChange((event, s) => {
     session.value = s || null
     user.value = s ? s.user : null
+
+    if (event === 'TOKEN_REFRESH_FAILED') {
+      // 换票失败：坏会话，立即本地清理
+      clearBrokenSession('refresh_failed')
+      return
+    }
 
     if (event === 'SIGNED_IN' && s) {
       // 首次 SIGNED_IN：upsert profiles（RLS 限本人，on conflict do nothing）
@@ -141,6 +191,11 @@ export function initAuth(deps = {}) {
     .catch(() => {
       /* 后端不可达时不降级，保持 env 判定 */
     })
+
+  // API 层 401 广播 → 统一清理坏会话（止住换票风暴并提示重新登录）
+  window.addEventListener(AUTH_EXPIRED_EVENT, () => {
+    if (session.value) clearBrokenSession('api_401')
+  })
 }
 
 /**
