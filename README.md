@@ -124,7 +124,8 @@ supabase 模式的提交走 **Edge Function 异步评分**（本地模式仍为 
 
 流水线已内置（`.github/workflows/deploy-pages.yml`）：push `main` 自动构建并发布。启用步骤：
 
-1. **开启 Pages**：仓库 Settings → Pages → Build and deployment → Source 选 **GitHub Actions**（一次性）。
+0. **根目录产物**（当前生效方式）：`index.html` + `assets/` + `.nojekyll` 是构建产物直接发布在 main 根目录——分支模式 Pages（main/root）会优先展示 `index.html` 而不是 README，**无需任何设置即生效**；每次 CI 构建自动同步（勿手改这三个产物）。
+1. **（可选）切换到 Actions 发布**：仓库 Settings → Pages → Build and deployment → Source 选 **GitHub Actions** 后走官方 artifact 发布，根目录产物仍会同步保留。
 2. **配置 Secrets**：Settings → Secrets and variables → Actions，按需添加——
    | Secret | 必填 | 说明 |
    |---|---|---|

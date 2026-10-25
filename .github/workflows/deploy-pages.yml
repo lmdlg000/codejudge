@@ -19,6 +19,8 @@ concurrency:
 jobs:
   build:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     steps:
       - uses: actions/checkout@v4
 
@@ -39,6 +41,22 @@ jobs:
         run: |
           npm ci
           npm run build
+
+      # 发布到 main 根目录：分支模式 Pages（main/root）直接可展示（.nojekyll 跳过 Jekyll/README 渲染）
+      - name: Publish site to repo root
+        run: |
+          rm -rf assets index.html favicon.svg
+          cp -r frontend/dist/assets frontend/dist/index.html frontend/dist/favicon.svg .
+          touch .nojekyll
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add -A assets index.html favicon.svg .nojekyll
+          if git diff --cached --quiet; then
+            echo "No changes to publish"
+          else
+            git commit -m "chore: publish Pages site build [skip ci]"
+            git push
+          fi
 
       - uses: actions/upload-pages-artifact@v3
         with:
