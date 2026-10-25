@@ -57,7 +57,8 @@ const items = computed(() => [
     key: 'admin',
     name: '人工复核管理员',
     detail: 'insert into public.reviewers (id) values (\'<你的 UID>\');（/admin-review 页可复制现成 SQL）',
-    state: isReviewer.value === null ? 'idle' : isReviewer.value ? 'ok' : 'bad'
+    state: isReviewer.value === null ? 'idle' : isReviewer.value ? 'ok' : 'bad',
+    badLabel: '非管理员'
   }
 ])
 
@@ -114,7 +115,7 @@ onMounted(() => {
         <span class="cfg__dot" :class="`cfg__dot--${it.state}`" aria-hidden="true"></span>
         <span class="cfg__name">{{ it.name }}</span>
         <span class="cfg__state mono-data">
-          {{ it.state === 'ok' ? '就绪' : it.state === 'bad' ? '缺配置' : '待探测' }}
+          {{ it.state === 'ok' ? '就绪' : it.state === 'bad' ? (it.badLabel || '缺配置') : '待探测' }}
         </span>
         <span class="cfg__detail caption">{{ it.detail }}</span>
       </li>

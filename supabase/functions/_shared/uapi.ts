@@ -103,7 +103,8 @@ export async function runOne(
         "Content-Type": "application/json",
         Authorization: `Bearer ${token}`,
       },
-      signal: AbortSignal.timeout(15000),
+      // HTTP 层超时留足余量（须大于 UAPI 执行 timeout_ms）
+      signal: AbortSignal.timeout(timeoutMs + 15000),
       body: JSON.stringify({
         language,
         code,
@@ -140,7 +141,13 @@ export async function runSamples(
 
   const language = sub.language || env("UAPI_LANGUAGE", "cpp");
   const code = mergeFiles(sub.files);
-  const timeoutMs = Math.min(10000, Math.max(1000, sub.problem.limits.time_ms || 5000));
+  // UAPI 的 timeout_ms 覆盖「编译 + 执行」：远程 g++ 编译通常 2~5s，
+  // 直接用题目时限（如 1000ms）会把所有样例误判成 TLE。
+  // 策略：题目时限 ×2 + 4s 编译余量，5s 起步、30s 封顶；UAPI_TIMEOUT_MS 可整体覆盖。
+  const envTimeout = Number(env("UAPI_TIMEOUT_MS", "")) || 0;
+  const timeoutMs = envTimeout > 0
+    ? Math.min(60000, envTimeout)
+    : Math.min(30000, Math.max(5000, (sub.problem.limits.time_ms || 1000) * 2 + 4000));
   const cases: RunCase[] = [];
   let compileOutput: string | null = null;
   let anyFail = false;
