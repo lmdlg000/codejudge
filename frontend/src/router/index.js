@@ -28,6 +28,11 @@ const routes = [
     component: () => import('../pages/SubmissionDetail.vue')
   },
   {
+    path: '/auth/verified',
+    name: 'auth-verified',
+    component: () => import('../pages/AuthVerify.vue')
+  },
+  {
     path: '/admin-review',
     name: 'admin-review',
     component: () => import('../pages/ReviewPage.vue')

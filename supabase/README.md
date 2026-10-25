@@ -24,6 +24,9 @@ Realtime 推送            写入 human_review_queue（priority: 分数<40 或 A
 
 **双层校验**：① 前端体验层——OneCompiler 嵌入式编辑器内「测此样例」（populateCode 注入 stdin + triggerRun）或「运行样例」（`judge` 的 `dry_run`），全部通过才启用提交按钮；② 后端安全层（核心）——`judge` 插入前强制复验，任一失败 400 不写库。
 
+4. **Supabase 回跳配置**：Site URL = `https://lmdlg000.github.io/codejudge/`；Redirect URLs 追加 `https://lmdlg000.github.io/codejudge/*` + `http://localhost:5173/*`（**严禁写 `#/`**，OAuth 回跳靠 `detectSessionInUrl` 吸收令牌）。
+   **邮箱验证链路**：signUp 带 `emailRedirectTo = <站点>/?verified=1` → 确认邮件的 ConfirmationURL 验证通过后 302 落回站点 → 自动转入 `/auth/verified`「邮箱验证成功」页（链接过期则显示失败态）；因此 Redirect URLs 必须包含 `https://lmdlg000.github.io/codejudge/*` 通配，否则 goTrue 会拒绝该回跳。
+
 **备用通道（防卡死）**：样例测试累计 ≥10 次仍无法全部通过时，前端解锁「备用通道提交（转人工复核）」（`force_submit: true`）——AI 仅出参考分，**一律进入人工复核队列**，最终得分以人工裁决为准。
 
 前端零轮询零刷新：结果页订阅 `postgres_changes`（表 `submissions`，RLS 生效）。

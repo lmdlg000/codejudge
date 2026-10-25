@@ -139,6 +139,26 @@ export function initAuth(deps = {}) {
   inited = true
   toastFn = deps.toast || null
 
+  // 邮箱验证回跳落地（Supabase 验证完成 302 回站点根）：
+  //   ?verified=1 → 「验证成功」页；hash 带 error=（链接过期/无效）→ 失败态
+  try {
+    const params = new URLSearchParams(window.location.search)
+    const hash = window.location.hash || ''
+    if (params.has('verified') || /(^|[#&])error=/.test(hash)) {
+      const failed = /(^|[#&])error=/.test(hash) && !params.has('verified')
+      params.delete('verified')
+      const q = params.toString()
+      window.history.replaceState(
+        null,
+        '',
+        window.location.pathname + (q ? '?' + q : '') + (failed ? '' : hash.replace(/(^#|&)verified=1/, ''))
+      )
+      if (deps.router) deps.router.replace(failed ? '/auth/verified?failed=1' : '/auth/verified')
+    }
+  } catch {
+    /* ignore */
+  }
+
   // 启动恢复登录态 + 坏会话自检（防 autoRefresh 无限 401）
   supabase.auth.getSession().then(({ data }) => {
     session.value = data && data.session ? data.session : null
@@ -206,7 +226,12 @@ export function signUp(form) {
   return supabase.auth.signUp({
     email: form.email,
     password: form.password,
-    options: { data: { username: form.username || form.email.split('@')[0] } }
+    options: {
+      data: { username: form.username || form.email.split('@')[0] },
+      // 邮箱验证完成后的落地地址：带 verified=1 标记，initAuth 转入「验证成功」页
+      // （GitHub Pages 无服务端路由，必须落回站点根；hash 路由由页面内跳转完成）
+      emailRedirectTo: siteRootUrl() + '?verified=1'
+    }
   })
 }
 
