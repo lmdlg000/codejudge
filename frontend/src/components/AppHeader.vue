@@ -7,7 +7,7 @@
  */
 import { ref, computed, onMounted, onBeforeUnmount, nextTick, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { getHealth } from '../api/client.js'
+import { getHealth, FASTAPI_DISABLED } from '../api/client.js'
 import {
   authMode,
   effectiveAuthMode,
@@ -23,6 +23,8 @@ const route = useRoute()
 const router = useRouter()
 const drawerOpen = ref(false)
 const engineOk = ref(true)
+/** 纯云模式（GitHub Pages 等：无 FastAPI，判题走 Edge Functions + UAPI） */
+const cloudMode = FASTAPI_DISABLED && authMode
 const drawerEl = ref(null)
 const burgerEl = ref(null)
 
@@ -178,6 +180,7 @@ watch(
 onMounted(async () => {
   window.addEventListener('keydown', onKeydown)
   document.addEventListener('click', onDocClick)
+  if (cloudMode) return // 云模式无本机引擎可探，避免无谓请求与误导黄灯
   try {
     const h = await getHealth()
     engineOk.value = h && h.status === 'ok'
@@ -244,13 +247,16 @@ function goLogin() {
       </nav>
 
       <div class="header__right">
-        <div class="header__health" :title="engineOk ? '本机评测引擎就绪' : '引擎不可用'">
+        <div
+          class="header__health"
+          :title="cloudMode ? '云端评测（UAPI 执行 · AI 判分 · 人工复核）' : (engineOk ? '本机评测引擎就绪' : '引擎不可用')"
+        >
           <span
             class="header__dot"
-            :class="engineOk ? 'header__dot--ok' : 'header__dot--warn'"
+            :class="cloudMode || engineOk ? 'header__dot--ok' : 'header__dot--warn'"
             aria-hidden="true"
           ></span>
-          <span class="micro header__health-text">本机评测</span>
+          <span class="micro header__health-text">{{ cloudMode ? '云端评测' : '本机评测' }}</span>
         </div>
 
         <!-- ===== 用户区三态（Δ2-2，桌面） ===== -->
