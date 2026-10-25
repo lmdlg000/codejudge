@@ -1,0 +1,17 @@
+{
+  "id": "P3",
+  "title": "活动安排",
+  "topic": "排序/贪心",
+  "difficulty": "中等",
+  "contest_type": "acm",
+  "build": {
+    "command": "g++ -O2 -std=c++17 -o {bin} {src}",
+    "src": "main.cpp"
+  },
+  "limits": {
+    "time_ms": 1500,
+    "memory_mb": 256
+  },
+  "score": 100,
+  "compare_mode": "trim"
+}

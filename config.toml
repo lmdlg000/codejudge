@@ -1,0 +1,11 @@
+# config.toml —— 全局默认（requirements.md 二）
+[judge]
+default_time_ms = 1000
+default_memory_mb = 256
+build_timeout_s = 60
+report_dir = "reports"
+
+[server]
+host = "127.0.0.1"
+port = 8000
+max_submit_seconds = 120

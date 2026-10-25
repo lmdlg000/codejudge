@@ -1,0 +1,5 @@
+{
+  "weight": 2,
+  "time_ms": 3000,
+  "note": "n=1e6 边界，含隐藏加权（weight=2），O(n log n) 可过"
+}

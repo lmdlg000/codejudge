@@ -1,0 +1,5 @@
+{
+  "weight": 2,
+  "time_ms": 4000,
+  "note": "n=1e5、m=2e5 边界，含隐藏加权（weight=2），O(n+m) 拓扑排序"
+}

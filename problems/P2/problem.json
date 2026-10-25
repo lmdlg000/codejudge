@@ -1,0 +1,17 @@
+{
+  "id": "P2",
+  "title": "字符串压缩",
+  "topic": "字符串处理",
+  "difficulty": "简单",
+  "contest_type": "oi",
+  "build": {
+    "command": "g++ -O2 -std=c++17 -o {bin} {src}",
+    "src": "main.cpp"
+  },
+  "limits": {
+    "time_ms": 1000,
+    "memory_mb": 256
+  },
+  "score": 100,
+  "compare_mode": "trim"
+}

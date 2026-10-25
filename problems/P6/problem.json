@@ -1,0 +1,18 @@
+{
+  "id": "P6",
+  "title": "依赖检查器",
+  "topic": "拓扑排序/环检测",
+  "difficulty": "中等",
+  "contest_type": "acm",
+  "build": {
+    "command": "make",
+    "target": "inspector",
+    "output": "inspector"
+  },
+  "limits": {
+    "time_ms": 2000,
+    "memory_mb": 256
+  },
+  "score": 100,
+  "compare_mode": "trim"
+}

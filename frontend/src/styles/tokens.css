@@ -1,0 +1,137 @@
+/* frontend/src/styles/tokens.css —— 视觉令牌唯一来源（终端风格主题） */
+/* 设计语言：CRT 终端 —— 全站等宽、荧光绿主色、琥珀强调、ANSI 判定七色、直角 */
+:root {
+  /* —— 字族（全站等宽 = 终端第一信号）—— */
+  --font-sans: "JetBrains Mono", "Cascadia Code", "SF Mono", Consolas,
+               "Cascadia Mono", Menlo, "Noto Sans Mono", "Microsoft YaHei Mono", monospace;
+  --font-mono: "JetBrains Mono", "Cascadia Code", "SF Mono", Consolas,
+               "Cascadia Mono", Menlo, monospace;
+
+  /* —— 字号 / 行高 —— */
+  --text-h1: 28px;        --lh-h1: 1.3;    --fw-h1: 700;
+  --text-h2: 21px;        --lh-h2: 1.4;    --fw-h2: 700;
+  --text-h3: 17px;        --lh-h3: 1.45;   --fw-h3: 600;
+  --text-h4: 15px;        --lh-h4: 1.5;    --fw-h4: 600;
+  --text-body-lg: 15px;   --lh-body-lg: 1.75;
+  --text-body: 14px;      --lh-body: 1.7;
+  --text-caption: 12px;   --lh-caption: 1.55;
+  --text-micro: 11px;     --lh-micro: 1.4;
+  --text-mono-code: 13px; --lh-mono-code: 1.65;
+  --text-mono-data: 12px;
+  --text-mono-badge: 12px;
+  --text-banner: 20px;    /* ≤640px 降 14px */
+
+  /* —— 间距刻度（4 基数）—— */
+  --space-1: 4px;  --space-2: 8px;  --space-3: 12px; --space-4: 16px;
+  --space-5: 20px; --space-6: 24px; --space-8: 32px; --space-10: 40px;
+  --space-12: 48px; --space-16: 64px; --space-20: 80px; --space-24: 96px;
+
+  /* —— 容器与栅格 —— */
+  --container: 1120px;
+  --container-wide: 1280px;
+  --container-narrow: 880px;
+  --gutter: 24px;
+  --page-pad: 24px;          /* ≤640px: 16px */
+  --section-gap: 56px;       /* ≤640px: 40px */
+
+  /* —— 圆角 / 阴影 / 边框（终端偏直角）—— */
+  --radius-sm: 2px;
+  --radius: 2px;
+  --radius-lg: 3px;
+  --shadow-1: 0 0 0 1px rgba(61, 255, 122, 0.08), 0 6px 18px rgba(0, 0, 0, 0.45);
+  --border: 1px solid #23382B;
+  --border-strong: 1px solid #35513D;
+
+  /* —— 中性色阶（偏绿的终端灰）—— */
+  --neutral-50: #EAF5EC;  --neutral-100: #D6E8D8; --neutral-200: #35513D;
+  --neutral-300: #3E5C47; --neutral-400: #6E8A75; --neutral-500: #8AA891;
+  --neutral-600: #9DBBA3; --neutral-700: #1A2820; --neutral-800: #121A14;
+  --neutral-900: #0B0F0C;
+
+  /* —— 语义表面 / 文字 / 边框 —— */
+  --bg-page: #0B0F0C;
+  --bg-surface: #101611;
+  --bg-subtle: #16201A;
+  --bg-inset: #1C2820;
+  --text-primary: #D6E8D8;
+  --text-secondary: #9DBBA3;
+  --text-muted: #6E8A75;
+  --text-disabled: #4A5F50;
+  --text-inverse: #0B0F0C;
+
+  /* —— 主色（荧光绿）—— */
+  --primary: #3DFF7A;
+  --primary-hover: #6BFF9B;
+  --primary-active: #2BE05C;
+  --primary-bg: #12291B;
+  --focus-ring: #3DFF7A;
+
+  /* —— 语义色（提示条/表单）—— */
+  --success-text: #3DFF7A; --success-bg: #0F2917; --success-border: #2E9E52;
+  --warning-text: #FFB000; --warning-bg: #2B2006; --warning-border: #B37A00;
+  --danger-text: #FF5F56;  --danger-bg: #2B0F0C;  --danger-border: #B33A33;
+  --danger-solid: #C23B32; --danger-solid-hover: #E04A40;
+  --info-text: #56D4E0;    --info-bg: #0A2226;    --info-border: #2E8A94;
+
+  /* —— 判定 7 色（ANSI 映射：亮色文字 + 暗底 + 深边）—— */
+  --verdict-ac-text: #3DFF7A; --verdict-ac-bg: #0F2917; --verdict-ac-border: #2E9E52;
+  --verdict-pe-text: #56D4E0; --verdict-pe-bg: #0A2226; --verdict-pe-border: #2E8A94;
+  --verdict-wa-text: #FF5F56; --verdict-wa-bg: #2B0F0C; --verdict-wa-border: #B33A33;
+  --verdict-tle-text: #FFB000; --verdict-tle-bg: #2B2006; --verdict-tle-border: #B37A00;
+  --verdict-re-text: #FF6BD6; --verdict-re-bg: #2A0D22; --verdict-re-border: #A33B88;
+  --verdict-ce-text: #C792EA; --verdict-ce-bg: #1F122B; --verdict-ce-border: #7B4E9E;
+  --verdict-se-text: #9E9E9E; --verdict-se-bg: #1A1A1A; --verdict-se-border: #555555;
+
+  /* —— 代码面板（CRT 深屏）—— */
+  --code-bg: #0A100B;
+  --code-bar-bg: #121A14;
+  --code-text: #CDE6D0;
+  --code-muted: #6E8A75;
+  --code-accent: #3DFF7A;
+  --code-string: #B9E769;
+  --code-number: #FFB000;
+  --code-comment: #6E8A75;
+  --code-error: #FF5F56;
+  --code-error-bar: #FF5F56;
+  --code-border: #23382B;
+
+  /* —— 控件尺寸 —— */
+  --control-h: 40px;
+  --control-h-lg: 44px;
+  --control-h-sm: 32px;
+  --header-h: 56px;
+  --table-row-h: 40px;
+  --table-row-compact-h: 36px;
+  --table-head-h: 36px;
+  --badge-h: 22px;
+  --badge-h-lg: 28px;
+
+  /* —— 动效 —— */
+  --dur-fast: 160ms;
+  --dur-base: 200ms;
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+
+  /* —— 层级 —— */
+  --z-header: 20;
+  --z-drawer: 40;
+  --z-toast: 60;
+
+  /* —— Δ2 补：弹层遮罩（抽屉与退出确认弹层统一引用，无新增色相）—— */
+  --overlay: rgba(11, 15, 12, 0.55);
+}
+
+@media (max-width: 640px) {
+  :root {
+    --text-h1: 22px;
+    --text-banner: 14px;
+    --page-pad: 16px;
+    --section-gap: 40px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --dur-fast: 0ms;
+    --dur-base: 0ms;
+  }
+}

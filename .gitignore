@@ -1,0 +1,33 @@
+# CodeJudge .gitignore
+
+# 环境变量与密钥（🔴 .env 一律不入库；泄漏的 secret 必须去 Supabase 轮换）
+.env
+.env.*
+!.env.example
+backend/.env
+frontend/.env
+frontend/.env.*
+!frontend/.env.example
+
+# 运行时产物
+reports/
+*.log
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+
+# Node / 前端
+node_modules/
+frontend/dist/
+frontend/.vite/
+
+# 编辑器 / 系统
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+
+.workbuddy
