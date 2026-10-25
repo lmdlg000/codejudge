@@ -61,19 +61,28 @@ function triggerRun() {
 
 /**
  * 用指定样例入参在编辑器内测试（注入 stdin → 触发运行 → 等待结果回传）。
- * 返回 { stdout, stderr, status } 或 null（20s 内未收到 result 回传）。
+ * 返回 { stdout, stderr, status } 或 null（超时未收到 result 回传——
+ * 已知：代码含 cin>> 等输入时，embed 仅在右侧面板处于 I/O 页签才回传结果）。
+ * 并发保护：新测试开始即废弃旧的等待（防串台把 A 的结果记到 B 头上）。
  */
-async function runWithStdin(stdin) {
+async function runWithStdin(stdin, timeoutMs = 10000) {
   if (!ready.value) return null
+  // 废弃上一次未完成的等待
+  if (pendingResolve) {
+    const old = pendingResolve
+    pendingResolve = null
+    clearTimeout(pendingTimer)
+    old(null)
+  }
   populate(props.modelValue, stdin)
   await new Promise((r) => setTimeout(r, 300))
   return await new Promise((resolve) => {
     pendingResolve = resolve
     clearTimeout(pendingTimer)
     pendingTimer = setTimeout(() => {
-      pendingResolve = null
+      if (pendingResolve === resolve) pendingResolve = null
       resolve(null)
-    }, 20000)
+    }, timeoutMs)
     triggerRun()
   })
 }

@@ -112,6 +112,15 @@ export async function verifySamples(payload, token) {
 }
 
 /**
+ * 配置自检（probe）：不执行任何代码，回报 Edge Secrets 配置状态。
+ * 旧版函数不识别 probe 会返回 400「必须提供显式测试样例」→ 提示需重新部署。
+ * @returns {Promise<{probe:boolean, uapi_configured:boolean, ai_configured:boolean, secret_configured:boolean}>}
+ */
+export async function probeConfig(token) {
+  return callFunction('judge', { probe: true }, token)
+}
+
+/**
  * 人工复核裁决（admin-review）：{ submission_id, score, feedback, decision: 'pass'|'fail' }
  * @returns {Promise<{submission_id:string, status:string}>}
  */

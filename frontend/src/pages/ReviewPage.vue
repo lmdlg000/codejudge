@@ -10,6 +10,16 @@ import { useRouter } from 'vue-router'
 import { supabase } from '../api/supabase.js'
 import { effectiveAuthMode, isLoggedIn, accessToken } from '../composables/useAuth.js'
 import { submitReview } from '../api/asyncSubmit.js'
+
+/** 取当前登录用户 id（供自助提权 SQL 展示） */
+async function currentUid() {
+  try {
+    const { data } = await supabase.auth.getUser()
+    return (data && data.user && data.user.id) || ''
+  } catch {
+    return ''
+  }
+}
 import AppButton from '../components/AppButton.vue'
 import AppTabs from '../components/AppTabs.vue'
 import SourceEcho from '../components/SourceEcho.vue'
@@ -25,7 +35,10 @@ const items = ref([])
 const loading = ref(true)
 const error = ref(null)
 const notReviewer = ref(false)
+const myUid = ref('')
 const submittingId = ref('')
+/** reviewers 表是否可读（表未建时给迁移提示） */
+const reviewersTableOk = ref(true)
 
 /** 每行的复核表单（score / feedback） */
 const forms = ref({})
@@ -46,6 +59,26 @@ async function init() {
     return
   }
   try {
+    // 管理员身份检测：reviewers 白名单（RLS 仅允许读自己那行）
+    const uid = await currentUid()
+    myUid.value = uid
+    const { data: meRow, error: meErr } = await supabase
+      .from('reviewers')
+      .select('id')
+      .eq('id', uid)
+      .maybeSingle()
+    if (meErr) {
+      reviewersTableOk.value = false
+      notReviewer.value = true
+      loading.value = false
+      return
+    }
+    if (!meRow) {
+      notReviewer.value = true
+      loading.value = false
+      return
+    }
+
     const { data: queue, error: qerr } = await supabase
       .from('human_review_queue')
       .select('*')
@@ -147,13 +180,26 @@ onMounted(init)
       <ErrorBar v-else-if="error" :error="error" />
 
       <EmptyState
-        v-else-if="notReviewer"
+        v-else-if="notReviewer && !myUid"
         illustration="wrench"
-        illustration-title="无复核权限示意"
-        text="当前账号不在复核人名单中。请让管理员把你的账号加入 reviewers 表后重试。"
-        action-label="回到题目列表"
-        @action="router.push('/')"
+        illustration-title="未登录示意"
+        text="登录后才能进入人工复核队列。"
+        action-label="去登录"
+        @action="router.push({ path: '/login', query: { redirect: '/admin-review' } })"
       />
+
+      <section v-else-if="notReviewer" class="admin-setup" aria-label="管理员配置">
+        <h2 class="block__title">当前账号不是复核管理员</h2>
+        <p class="caption">
+          复核队列仅对 <code>reviewers</code> 表内的账号开放（RLS 隔离，其他人看不到任何队列数据）。
+          在 Supabase 控制台 → SQL Editor 执行下面这条 SQL，把自己设为管理员后刷新本页：
+        </p>
+        <pre class="admin-setup__sql mono-data">insert into public.reviewers (id) values ('{{ myUid }}');</pre>
+        <p v-if="!reviewersTableOk" class="caption admin-setup__warn">
+          提示：reviewers 表查询失败——若尚未建表，请先在 SQL Editor 依次执行 supabase/migrations/0002_ai_review.sql。
+        </p>
+        <AppButton variant="secondary" @click="init">我已执行，重新检测</AppButton>
+      </section>
 
       <EmptyState
         v-else-if="!pendingCount"
@@ -366,5 +412,34 @@ onMounted(init)
   font-family: var(--font-mono);
   font-size: var(--text-mono-code);
   resize: vertical;
+}
+
+/* 管理员自助提权 */
+.admin-setup {
+  border: var(--border);
+  border-left: 4px solid var(--primary);
+  background: var(--bg-surface);
+  padding: var(--space-5);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  align-items: flex-start;
+}
+
+.admin-setup__sql {
+  width: 100%;
+  margin: 0;
+  padding: var(--space-3);
+  background: var(--code-bg);
+  border: 1px solid var(--code-border);
+  color: var(--code-accent);
+  font-size: var(--text-mono-code);
+  overflow-x: auto;
+  user-select: all;
+}
+
+.admin-setup__warn {
+  color: var(--warning-text);
+  margin: 0;
 }
 </style>

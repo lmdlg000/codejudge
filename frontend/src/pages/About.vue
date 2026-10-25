@@ -13,6 +13,7 @@ import CollapsePanel from '../components/CollapsePanel.vue'
 import PipelineDiagram from '../components/PipelineDiagram.vue'
 import AppButton from '../components/AppButton.vue'
 import AlertBar from '../components/AlertBar.vue'
+import ConfigCheck from '../components/ConfigCheck.vue'
 import { configMismatch } from '../composables/useAuth.js'
 import { VERDICTS, verdictMeta } from '../utils/verdicts.js'
 import { TDK_ABOUT, applyTdk } from '../utils/tdk.js'
@@ -102,6 +103,9 @@ const REDLINE = `禁止把用户路径直接拼进 shell=True；构建命令模�
   <main class="page">
     <div class="page__main container container--narrow">
       <h1>从跑起来到看懂每一种判定，一页讲完</h1>
+
+      <!-- 配置自检：手动变量逐项可视化（云模式密钥/管理员/函数版本） -->
+      <ConfigCheck class="section" />
 
       <!-- 区块 1：使用流程三步 -->
       <section class="section" aria-labelledby="steps-title">

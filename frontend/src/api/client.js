@@ -5,9 +5,19 @@
  */
 import { ApiError, ERROR_HINTS, toApiError } from './errors.js'
 
-// 同源默认；前端静态部署（如 GitHub Pages）时以 VITE_API_BASE 指向后端
-// （import.meta.env 为 Vite 注入；Node 单测环境下安全降级为空）
-const BASE = ((import.meta.env && import.meta.env.VITE_API_BASE) || '') + '/api'
+// 同源默认；前端静态部署（如 GitHub Pages）时以 VITE_API_BASE 指向**FastAPI 判题后端**。
+// ⚠ 防御：VITE_API_BASE 被误填为 Supabase functions 地址（…/functions/v1/judge）时，
+//   拼出的 judge/api/* 会产生 401 噪音刷屏——此类值一律视为未配置。
+// 纯云模式（非本机、未配合法 VITE_API_BASE）：跳过 FastAPI 调用，避免无意义 404/401；
+// 本机（localhost/127.0.0.1）开发与单端口部署保持 /api 正常工作。
+const RAW_BASE = (((import.meta.env && import.meta.env.VITE_API_BASE) || '') + '').trim()
+const INVALID_BASE = /supabase\.co|\/functions\//i.test(RAW_BASE)
+const apiBaseRaw = INVALID_BASE ? '' : RAW_BASE
+const HOST_IS_LOCAL =
+  typeof location === 'undefined' ||
+  /^(localhost|127\.0\.0\.1|\[::1\])(:\d+)?$/i.test(location.host)
+export const FASTAPI_DISABLED = !apiBaseRaw && !HOST_IS_LOCAL
+const BASE = apiBaseRaw + '/api'
 
 /**
  * 统一请求：解析 JSON、把统一错误体转成 ApiError、网络失败兜底。
@@ -15,6 +25,10 @@ const BASE = ((import.meta.env && import.meta.env.VITE_API_BASE) || '') + '/api'
  * @param {RequestInit} [options]
  */
 async function request(path, options = {}) {
+  if (FASTAPI_DISABLED) {
+    // 纯云模式无 FastAPI：快速失败（题库走静态打包、判题走 Edge Functions）
+    throw new ApiError('LOCAL_ONLY', '当前部署未接入本地判题 API', 0)
+  }
   let res
   try {
     res = await fetch(BASE + path, {

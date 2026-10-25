@@ -118,29 +118,56 @@ const forceAvailable = computed(
   () => needsSampleGate.value && !samplesPassed.value && testAttempts.value >= FORCE_THRESHOLD
 )
 
-/** 在嵌入式编辑器内测单个样例：注入 stdin → 触发运行 → 比对输出 */
+/** 在嵌入式编辑器内测单个样例：注入 stdin → 触发运行 → 比对输出；
+ *  嵌入式未回传结果（如 Console/I-O 页签影响）→ 云端 dry_run 兜底。 */
 async function testSampleInEditor(i) {
   const s = samples.value[i]
-  if (!s || !ocEditorRef.value) return
+  if (!s || verifying.value) return
+  verifying.value = true
   testAttempts.value += 1
   const states = [...sampleStates.value]
-  states[i] = { passed: false, status: '运行中…', expected: s.output, actual: '' }
+  states[i] = { running: true }
   sampleStates.value = states
-  const res = await ocEditorRef.value.runWithStdin(s.input)
+
+  const norm = (x) => String(x ?? '').replace(/\r\n/g, '\n').replace(/[ \t]+$/gm, '').trim()
+  let result = null
+  let source = 'embed'
+  // ① 嵌入式编辑器实跑（免费，OneCompiler 沙盒）
+  if (ocEditorRef.value) {
+    result = await ocEditorRef.value.runWithStdin(s.input)
+  }
+  // ② 兜底：云端 dry_run（UAPI 实跑，权威结果；带上 only_sample 供新版后端省调用）
+  if (!result) {
+    source = 'cloud'
+    try {
+      const payload = buildPayload()
+      payload.only_sample = i
+      const res = await verifySamples(payload, accessToken())
+      const one = (res && res.samples && res.samples[i]) || null
+      if (one) {
+        result = { stdout: one.actual ?? '', status: one.status || '', stderr: '' }
+      } else if (res && res.skipped) {
+        result = { stdout: '', status: `执行器未配置（${res.skipped}）`, stderr: '' }
+      }
+    } catch (e) {
+      submitError.value = toApiError(e)
+    }
+  }
+
   const next = [...sampleStates.value]
-  if (!res) {
+  if (!result) {
     next[i] = { passed: false, status: '未收到结果', expected: s.output, actual: '' }
   } else {
-    const norm = (x) => String(x ?? '').replace(/\r\n/g, '\n').replace(/[ \t]+$/gm, '').trim()
-    const passed = norm(res.stdout) === norm(s.output)
+    const passed = norm(result.stdout) === norm(s.output)
     next[i] = {
       passed,
-      status: passed ? 'Accepted' : res.status || 'Wrong Answer',
+      status: passed ? (source === 'cloud' ? 'Accepted（云端实跑）' : 'Accepted') : result.status || 'Wrong Answer',
       expected: s.output,
-      actual: res.stdout
+      actual: result.stdout
     }
   }
   sampleStates.value = next
+  verifying.value = false
 }
 
 /** 提交按钮禁用提示（按优先级取第一条未满足条件） */
@@ -610,11 +637,12 @@ function onErrAction() {
                     <span
                       class="sample-gate__state mono-data"
                       :class="{
-                        'sample-gate__state--pass': sampleStates[i] && sampleStates[i].passed,
-                        'sample-gate__state--fail': sampleStates[i] && !sampleStates[i].passed
+                        'sample-gate__state--run': sampleStates[i] && sampleStates[i].running,
+                        'sample-gate__state--pass': sampleStates[i] && !sampleStates[i].running && sampleStates[i].passed,
+                        'sample-gate__state--fail': sampleStates[i] && !sampleStates[i].running && !sampleStates[i].passed
                       }"
                     >
-                      {{ sampleStates[i] ? (sampleStates[i].passed ? '通过' : `失败（${sampleStates[i].status}）`) : '待运行' }}
+                      {{ !sampleStates[i] ? '待运行' : sampleStates[i].running ? '运行中…' : (sampleStates[i].passed ? '通过' : `失败（${sampleStates[i].status}）`) }}
                     </span>
                     <button
                       v-if="needsSampleGate && submitMode !== 'multi'"
@@ -901,6 +929,10 @@ function onErrAction() {
 
 .sample-gate__state--fail {
   color: var(--verdict-wa-text);
+}
+
+.sample-gate__state--run {
+  color: var(--info-text);
 }
 
 .sample-gate__ok {

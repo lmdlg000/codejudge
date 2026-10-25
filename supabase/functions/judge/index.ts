@@ -54,6 +54,15 @@ Deno.serve(async (req: Request) => {
     const dryRun = body.dry_run === true;
     // 备用通道：样例未全过强制提交（前端测试 ≥10 次解锁；结果强制转人工复核）
     const forceSubmit = body.force_submit === true;
+    // 配置自检：不执行任何代码，只回报各密钥是否已配置（供前端「配置自检」面板）
+    if (body.probe === true) {
+      return json({
+        probe: true,
+        uapi_configured: !!Deno.env.get("UAPI_ACCESS_TOKEN"),
+        ai_configured: !!Deno.env.get("AI_API_KEY"),
+        secret_configured: !!Deno.env.get("SUPABASE_SECRET_KEY"),
+      });
+    }
     if (!problemId) {
       return apiError("VALIDATION_ERROR", "提交内容不合法，请检查后重试：problem_id 必填");
     }
@@ -62,9 +71,23 @@ Deno.serve(async (req: Request) => {
     }
 
     // ---- 3. 前置强制校验：UAPI 逐个跑显式样例（双层校验的后端安全层） ----
-    const run: RunnerRun = await runSamples(sub);
+    // only_sample：前端「测此样例」单样例实跑（省积分）
+    const onlyIdx = Number.isInteger(body.only_sample) ? body.only_sample : null;
+    const sampleList =
+      onlyIdx != null && sub.problem.samples[onlyIdx] ? [sub.problem.samples[onlyIdx]] : undefined;
+    const run: RunnerRun = await runSamples(sub, sampleList);
     if (run.skipped === "not_configured") {
-      return apiError("ENGINE_UNAVAILABLE", "判题引擎不可用，请检查服务端 UAPI 配置", 503);
+      // 执行器未配置：dry_run 回报状态；force_submit 放行（强制人工复核）；正常提交 503
+      if (dryRun) {
+        return json({ dry_run: true, passed: false, skipped: "not_configured", samples: [] });
+      }
+      if (!forceSubmit) {
+        return apiError(
+          "ENGINE_UNAVAILABLE",
+          "判题引擎不可用：服务端未配置 UAPI_ACCESS_TOKEN（Supabase Edge Secrets），无法校验显式样例",
+          503,
+        );
+      }
     }
 
     // dry_run：只回逐样例结果（前端体验层），不落库
@@ -130,9 +153,13 @@ Deno.serve(async (req: Request) => {
     // ---- 5. 后台异步 AI 评分（复用校验运行结果，不重复执行省积分）
     //      force_submit 备用通道 → 无论 AI 结论一律转人工复核
     EdgeRuntime.waitUntil(
-      gradeInBackground({ sid, problemId, sub, run, forceReview: forceSubmit }).catch((e) =>
-        console.error("gradeInBackground failed", sid, e),
-      ),
+      gradeInBackground({
+        sid,
+        problemId,
+        sub,
+        run,
+        forceReview: forceSubmit || run.skipped === "not_configured",
+      }).catch((e) => console.error("gradeInBackground failed", sid, e)),
     );
 
     // ---- 6. 回执 ----
