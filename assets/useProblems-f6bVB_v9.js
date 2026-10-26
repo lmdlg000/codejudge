@@ -1,4 +1,4 @@
-import{W as d,I as r,s as u,X as _}from"./index-CBftLEYC.js";const p=[{id:"P1",title:"运费计算",contest_type:"oi",score:100,compare_mode:"trim",limits:{time_ms:1e3,memory_mb:256},build:{mode:"g++",command:"g++ -O2 -std=c++17 -o {bin} {src}",src:"main.cpp",default_filename:"main.cpp"},topic:"分支/分段计费",difficulty:"入门",statement_md:`# P1 运费计算
+import{W as d,I as r,s as u,X as _}from"./index-Bf5B6zqT.js";const p=[{id:"P1",title:"运费计算",contest_type:"oi",score:100,compare_mode:"trim",limits:{time_ms:1e3,memory_mb:256},build:{mode:"g++",command:"g++ -O2 -std=c++17 -o {bin} {src}",src:"main.cpp",default_filename:"main.cpp"},topic:"分支/分段计费",difficulty:"入门",statement_md:`# P1 运费计算
 
 ## 题目背景
 
