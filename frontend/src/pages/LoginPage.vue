@@ -31,6 +31,8 @@ const tab = ref('login') // login | signup
 const email = ref('')
 const password = ref('')
 const confirm = ref('')
+/** 明文切换（两密码框联动，便于核对是否一致） */
+const revealPw = ref(false)
 
 const fieldErrors = ref({ email: '', password: '', confirm: '' })
 const authError = ref(null) // {code} → AlertBar
@@ -223,7 +225,10 @@ watch(isLoggedIn, (v) => {
             :placeholder="isLogin ? '你的密码' : '至少 8 位'"
             :autocomplete="isLogin ? 'current-password' : 'new-password'"
             name="password"
+            revealable
+            :revealed="revealPw"
             :error="fieldErrors.password"
+            @toggle-reveal="revealPw = !revealPw"
           />
           <!-- 确认密码：仅注册态渲染（登录态 DOM 中不存在） -->
           <TermInput
@@ -234,8 +239,18 @@ watch(isLoggedIn, (v) => {
             placeholder="再输入一次"
             autocomplete="new-password"
             name="confirm"
+            revealable
+            :revealed="revealPw"
             :error="fieldErrors.confirm"
+            @toggle-reveal="revealPw = !revealPw"
           />
+          <!-- 实时一致性提示：输入即核对，无需提交才发现不一致 -->
+          <p
+            v-if="!isLogin && confirm"
+            class="login__match caption"
+            :class="confirm === password ? 'login__match--ok' : 'login__match--bad'"
+            role="status"
+          >{{ confirm === password ? '✓ 两次输入一致' : '✗ 两次输入不一致' }}</p>
 
           <AppButton
             type="submit"
@@ -319,6 +334,20 @@ watch(isLoggedIn, (v) => {
   display: flex;
   flex-direction: column;
   gap: var(--space-4);
+}
+
+/* 两次输入一致性实时提示 */
+.login__match {
+  margin: calc(-1 * var(--space-2)) 0 0;
+  font-family: var(--font-mono);
+}
+
+.login__match--ok {
+  color: var(--verdict-ac-text);
+}
+
+.login__match--bad {
+  color: var(--verdict-wa-text);
 }
 
 .login__or {
