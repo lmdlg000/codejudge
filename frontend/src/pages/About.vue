@@ -91,7 +91,7 @@ const verdictRows = [
   }
 ]
 
-const CLI_CMDS = `python judge.py list                 # 列出 P1–P6 与用例（权重/时限/备注）
+const CLI_CMDS = `python judge.py list                 # 列出全部题目与用例（权重/时限/备注）
 python judge.py run P1 examples/P1_ac.cpp    # 评测单个提交
 python judge.py import-samples exercise/P1-shipping.md   # 从题面抽取样例
 python judge.py gen P1 --ref reference/P1.cpp            # 用参考实现刷新 .out`

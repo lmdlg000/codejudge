@@ -1,15 +1,33 @@
 /**
  * 逐页 TDK（content-plan 第 2 节逐字/模板）。
  * 本地工具站，仅保证标签页可读与信息架构一致。
+ * 题库规模文案**从题库数据动态推导**（新增题目自动更新，不写死编号区间）。
  */
+import problems from '../data/problems.json'
 
 const SITE = 'CodeJudge'
 
+/** P<n> 编号 → 「P1–P7」区间；非标准编号退化为 null（调用方走数量文案） */
+function rangeLabel(items) {
+  const ids = (items || []).map((p) => p.id).filter((id) => /^P\d+$/.test(id || ''))
+  if (!ids.length || ids.length !== (items || []).length) return null
+  const nums = ids.map((id) => Number(id.slice(1))).sort((a, b) => a - b)
+  return nums[0] === nums[nums.length - 1] ? `P${nums[0]}` : `P${nums[0]}–P${nums[nums.length - 1]}`
+}
+
+/** 题库规模（构建期随 problems/ 自动更新） */
+export const PROBLEM_COUNT = problems.length
+export const PROBLEM_RANGE_LABEL = rangeLabel(problems) || `${PROBLEM_COUNT} 道`
+
+const RANGE_TEXT = rangeLabel(problems) ? `${PROBLEM_RANGE_LABEL} 题库` : `${PROBLEM_COUNT} 道题题库`
+const DESC_SCALE = rangeLabel(problems)
+  ? `内置 ${PROBLEM_RANGE_LABEL} 共 ${PROBLEM_COUNT} 道 C++ 题`
+  : `内置 ${PROBLEM_COUNT} 道 C++ 题`
+
 /** 默认（首页） */
 export const TDK_HOME = {
-  title: 'CodeJudge 在线代码评测台 · P1–P6 题库',
-  description:
-    '本地运行的在线代码评测台，内置 P1–P6 六道 C++ 题。贴上代码提交后逐用例返回 AC/WA/TLE 等判定与得分，支持 ACM 与 OI 双模式，源码不离开本机。'
+  title: `${SITE} 在线代码评测台 · ${RANGE_TEXT}`,
+  description: `本地运行的在线代码评测台，${DESC_SCALE}。贴上代码提交后逐用例返回 AC/WA/TLE 等判定与得分，支持 ACM 与 OI 双模式，源码不离开本机。`
 }
 
 /**

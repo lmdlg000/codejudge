@@ -10,7 +10,7 @@ import ProblemCard from '../components/ProblemCard.vue'
 import ErrorBar from '../components/ErrorBar.vue'
 import EmptyState from '../components/EmptyState.vue'
 import { useProblems } from '../composables/useProblems.js'
-import { applyTdk, TDK_HOME } from '../utils/tdk.js'
+import { applyTdk, TDK_HOME, PROBLEM_RANGE_LABEL } from '../utils/tdk.js'
 
 const router = useRouter()
 const { items, loading, error, load } = useProblems()
@@ -30,7 +30,7 @@ function gotoProblem(pid) {
     <div class="page__main container container--wide">
       <!-- H1 区压缩，保证首屏露出列表 -->
       <header class="intro">
-        <h1>P1–P6 题目列表</h1>
+        <h1>{{ PROBLEM_RANGE_LABEL }} 题目列表</h1>
         <p class="intro__lead">
           本地判题引擎逐用例评测，支持 ACM / OI 两种计分。点卡片进详情，写完代码即可提交判题。
         </p>
