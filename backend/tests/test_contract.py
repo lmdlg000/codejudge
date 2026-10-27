@@ -37,7 +37,7 @@ def test_problems_contract() -> None:
     r = client.get("/api/problems")
     assert r.status_code == 200
     j = r.json()
-    assert j["total"] == 6
+    assert j["total"] == 7
     assert set(j["items"][0]) == {"id", "title", "contest_type", "score", "test_count", "time_limit_ms",
                                   "memory_limit_mb", "build_mode", "topic", "difficulty"}
 

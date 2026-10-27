@@ -1,0 +1,18 @@
+{
+  "id": "P7",
+  "title": "大整数类 BigInt",
+  "topic": "多文件工程/资源管理/运算符重载",
+  "difficulty": "困难",
+  "contest_type": "oi",
+  "build": {
+    "command": "make",
+    "target": "Project7",
+    "output": "Project7"
+  },
+  "limits": {
+    "time_ms": 1000,
+    "memory_mb": 256
+  },
+  "score": 100,
+  "compare_mode": "trim"
+}

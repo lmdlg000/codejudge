@@ -101,7 +101,25 @@ def evaluate(problem: Problem, workdir: Path, src_names: list[str], mode: str,
             cases.append(_case_dict(case, Verdict.CE.value, CE_MESSAGE))
     else:
         for case in problem.tests:
-            cases.append(_run_single_case(problem, case, br.binary))
+            if case.main_from is None:
+                cases.append(_run_single_case(problem, case, br.binary))
+                continue
+            # main 替换用例（隐藏用例换 main 再构建）：备份 → 换源 → 重建 → 跑 → 还原
+            dest = workdir / case.main_file
+            backup = dest.read_bytes() if dest.exists() else None
+            dest.write_bytes(case.main_from.read_bytes())
+            try:
+                br2 = builder.build(problem, workdir, src_names)
+                if not br2.ok:
+                    build_log = (build_log or "") + f"\n[{case.name}] {br2.log}"
+                    cases.append(_case_dict(case, Verdict.CE.value, CE_MESSAGE))
+                else:
+                    cases.append(_run_single_case(problem, case, br2.binary))
+            finally:
+                if backup is None:
+                    dest.unlink(missing_ok=True)
+                else:
+                    dest.write_bytes(backup)
 
     summary = scorer.score(cases, mode, problem.score)
     verdict = scorer.synthesize_verdict([c["verdict"] for c in cases])

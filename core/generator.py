@@ -61,6 +61,13 @@ def generate(problem: Problem, ref_path: str | Path, keep_going: bool = False) -
     results: list[GenItem] = []
     try:
         for case in problem.tests:
+            if case.main_from is not None:
+                # main 替换用例：参考实现是单文件编译模型，无法换 main 重建 → 跳过防误写 .out
+                results.append(GenItem(
+                    case.name, "SKIP", 0.0,
+                    f"main 替换用例不支持 gen 自动刷新（{case.main_from.name}），请手工生成 .out",
+                ))
+                continue
             input_data = case.input_path.read_bytes()
             time_ms = problem.case_time_ms(case)
             rr = run(out_bin, input_data, time_ms, problem.default_memory_mb)

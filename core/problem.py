@@ -35,6 +35,9 @@ class TestCase:
     weight: float = 1.0
     time_limit_ms: int | None = None  # None → 用题目默认时限
     note: str = ""
+    # main 替换用例（如 P7 隐藏用例换 main.C 再构建）：<stem>.json 的 "main": {"file","from"}
+    main_file: str | None = None  # workdir 内被替换的文件名（如 main.C）
+    main_from: Path | None = None  # tests/ 下的替换源文件
 
 
 @dataclass
@@ -111,7 +114,8 @@ class Problem:
 
 
 def discover_tests(root: Path, require_output: bool = True) -> list[TestCase]:
-    """扫描 tests/*.in（文件名字典序），同名 .out 缺失直接拒绝；<stem>.json 覆盖 weight/time_ms/note。"""
+    """扫描 tests/*.in（文件名字典序），同名 .out 缺失直接拒绝；
+    <stem>.json 覆盖 weight/time_ms/note，以及 main 替换 {"main": {"file","from"}}（隐藏用例换 main 再构建）。"""
     tests_dir = root / "tests"
     if not tests_dir.is_dir():
         raise ProblemError(f"题目数据没读出来：{root.name}/tests/ 目录缺失")
@@ -138,6 +142,25 @@ def discover_tests(root: Path, require_output: bool = True) -> list[TestCase]:
                 case.time_limit_ms = int(data["time_ms"])
             if "note" in data:
                 case.note = str(data["note"])
+            if "main" in data:
+                mv = data["main"]
+                if not isinstance(mv, dict) or "file" not in mv or "from" not in mv:
+                    raise ProblemError(
+                        f"题目数据没读出来：{root.name}/tests/{override.name} 的 main 必须是 {{file, from}} 对象"
+                    )
+                dest = str(mv["file"])
+                src_name = str(mv["from"])
+                if not is_safe_name(dest) or not is_safe_name(src_name):
+                    raise ProblemError(
+                        f"题目数据没读出来：{root.name}/tests/{override.name} 的 main.file/main.from 文件名非法"
+                    )
+                src = tests_dir / src_name
+                if not src.is_file():
+                    raise ProblemError(
+                        f"题目数据没读出来：{root.name}/tests/{src_name}（main.from）不存在"
+                    )
+                case.main_file = dest
+                case.main_from = src
         cases.append(case)
     if not cases:
         raise ProblemError(f"题目数据没读出来：{root.name}/tests/ 没有 .in 用例")

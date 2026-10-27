@@ -1,0 +1,5 @@
+{
+  "weight": 2,
+  "note": "别名 +=/*=、乘 0、加 0、前导零规范化（0000/007）、比较",
+  "main": { "file": "main.C", "from": "hidden-1.main.C" }
+}

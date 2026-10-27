@@ -1,0 +1,5 @@
+{
+  "weight": 2,
+  "note": "R2 非数字前缀（12a34→12、abc→0）+ 六个比较运算符",
+  "main": { "file": "main.C", "from": "hidden-3.main.C" }
+}
