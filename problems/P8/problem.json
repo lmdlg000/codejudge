@@ -1,0 +1,17 @@
+{
+  "id": "P8",
+  "title": "报数出圈",
+  "topic": "输入输出/分支循环/字符串/模拟",
+  "difficulty": "基础",
+  "contest_type": "oi",
+  "build": {
+    "command": "g++ -O2 -std=c++17 -o {bin} {src}",
+    "src": "main.cpp"
+  },
+  "limits": {
+    "time_ms": 1000,
+    "memory_mb": 256
+  },
+  "score": 100,
+  "compare_mode": "trim"
+}

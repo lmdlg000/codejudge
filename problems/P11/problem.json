@@ -1,0 +1,18 @@
+{
+  "id": "P11",
+  "title": "工程排程",
+  "topic": "综合建模/图论/动态规划/贪心",
+  "difficulty": "综合",
+  "contest_type": "oi",
+  "build": {
+    "command": "make",
+    "target": "scheduler",
+    "output": "scheduler"
+  },
+  "limits": {
+    "time_ms": 2000,
+    "memory_mb": 256
+  },
+  "score": 100,
+  "compare_mode": "trim"
+}

@@ -1,0 +1,1 @@
+{"weight": 2, "note": "n=1e5 m=2e5 固定种子 DAG，鉴别 O((n+m) log n) 复杂度"}

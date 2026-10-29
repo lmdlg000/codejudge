@@ -37,7 +37,7 @@ def test_problems_contract() -> None:
     r = client.get("/api/problems")
     assert r.status_code == 200
     j = r.json()
-    assert j["total"] == 7
+    assert j["total"] == 11
     assert set(j["items"][0]) == {"id", "title", "contest_type", "score", "test_count", "time_limit_ms",
                                   "memory_limit_mb", "build_mode", "topic", "difficulty"}
 
@@ -49,7 +49,7 @@ def test_problem_detail_and_404() -> None:
     assert set(j) == {"id", "title", "contest_type", "score", "compare_mode", "limits", "build",
                       "statement_md", "samples", "test_count"}
     assert len(j["samples"]) == 5
-    r = client.get("/api/problems/P9")
+    r = client.get("/api/problems/P99")
     assert r.status_code == 404
     assert r.json()["error"]["code"] == "PROBLEM_NOT_FOUND"
 
@@ -102,7 +102,7 @@ def test_examples_contract() -> None:
     assert names["P1_ac.cpp"] == "AC"
     assert names["P1_make/"] == "make"
     assert client.get("/api/examples").status_code == 400
-    assert client.get("/api/examples", params={"problem_id": "P9"}).status_code == 404
+    assert client.get("/api/examples", params={"problem_id": "P99"}).status_code == 404
 
 
 if __name__ == "__main__":

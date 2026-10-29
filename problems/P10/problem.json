@@ -1,0 +1,18 @@
+{
+  "id": "P10",
+  "title": "最短路计数",
+  "topic": "搜索/图论/动态规划",
+  "difficulty": "提高",
+  "contest_type": "oi",
+  "build": {
+    "command": "make",
+    "target": "router",
+    "output": "router"
+  },
+  "limits": {
+    "time_ms": 2000,
+    "memory_mb": 256
+  },
+  "score": 100,
+  "compare_mode": "trim"
+}
