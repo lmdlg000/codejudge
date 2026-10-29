@@ -52,8 +52,17 @@ function defaultFilenameOf(build, mode) {
 }
 
 const items = []
+// 题号数值排序：P<n> 按数字升序（P2 < P10），非标准 id 排最后（与 core.problem.problem_id_key 同口径）
+function idOrder(a, b) {
+  const ma = /^P(\d+)$/.exec(a)
+  const mb = /^P(\d+)$/.exec(b)
+  if (ma && mb) return Number(ma[1]) - Number(mb[1])
+  if (ma) return -1
+  if (mb) return 1
+  return a.localeCompare(b)
+}
 if (existsSync(problemsDir)) {
-  for (const name of readdirSync(problemsDir).sort()) {
+  for (const name of readdirSync(problemsDir).sort(idOrder)) {
     const dir = join(problemsDir, name)
     const metaPath = join(dir, 'problem.json')
     const stmtPath = join(dir, 'statement.md')

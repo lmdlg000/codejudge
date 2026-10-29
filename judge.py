@@ -15,7 +15,7 @@ if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
 from core import builder, comparator, generator, importer, problem as problem_mod, reporter, runner, scorer
-from core.problem import Problem, ProblemError, ProblemNotFound, is_safe_name
+from core.problem import Problem, ProblemError, ProblemNotFound, is_safe_name, problem_id_key
 from core.verdict import Verdict, IS_WINDOWS, signal_name, translate_signal, windows_re_message
 
 CE_MESSAGE = "编译失败，展开查看编译器输出"
@@ -242,7 +242,8 @@ def cmd_import_samples(args) -> int:
 def cmd_list(args) -> int:
     problems_dir = Path(args.problems_dir)
     pids = [args.pid] if args.pid else sorted(
-        p.name for p in problems_dir.iterdir() if p.is_dir() and (p / "problem.json").is_file()
+        (p.name for p in problems_dir.iterdir() if p.is_dir() and (p / "problem.json").is_file()),
+        key=problem_id_key,
     )
     for pid in pids:
         try:

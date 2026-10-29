@@ -5,7 +5,7 @@ import shutil
 from pathlib import Path
 
 from core.importer import extract_samples
-from core.problem import Problem, ProblemError, ProblemNotFound
+from core.problem import Problem, ProblemError, ProblemNotFound, problem_id_key
 
 from ..config import get_examples_dir, get_problems_dir
 from ..errors import ApiError
@@ -41,7 +41,7 @@ def list_problems_raw() -> list[Problem]:
     errors: list[str] = []
     if not problems_dir.is_dir():
         raise ProblemError(f"找不到题目目录 {problems_dir}")
-    for entry in sorted(problems_dir.iterdir(), key=lambda p: p.name):
+    for entry in sorted(problems_dir.iterdir(), key=lambda p: problem_id_key(p.name)):
         if entry.is_dir() and (entry / "problem.json").is_file():
             try:
                 out.append(Problem.load(entry.name, problems_dir))

@@ -43,60 +43,6 @@
     "test_count": null
   },
   {
-    "id": "P10",
-    "title": "最短路计数",
-    "contest_type": "oi",
-    "score": 100,
-    "compare_mode": "trim",
-    "limits": {
-      "time_ms": 2000,
-      "memory_mb": 256
-    },
-    "build": {
-      "mode": "make",
-      "command": "make",
-      "src": null,
-      "default_filename": null
-    },
-    "topic": "搜索/图论/动态规划",
-    "difficulty": "提高",
-    "statement_md": "# P10 最短路计数\n\n> 难度：提高 · 多文件 make 工程（恰好 6 个文件） · 构建：`make` → `router` · 时限 2000ms / 256MB\n\n## 题目背景\n\n给定 n 个结点的有向带权图（结点编号 1..n，边权 w ≥ 0，**无重边、无自环**）。求从结点 1 到结点 n 的：\n\n1. **最短路长度 D**；\n2. **最短路的条数**（对 1000000007 取模）。\n\n两条路径不同 ⟺ **边序列不同**（走过相同边序列视为同一条路径；允许经过重复结点，只要边序列不同就算不同路径）。题目保证最短路条数有限（即不存在全部位于最短路上的 0 权环）。\n\n注意边权可以为 **0**：0 权边会制造大量**等长**的最短路，计数必须把它们全部算上，并按拓扑次序在最短路 DAG 上递推——同 dist 层内若不按拓扑序推进会漏算。\n\n- 若 1 不可达 n：输出 `-1 0`；\n- 若 n = 1：输出 `0 1`（起点即终点，长度为 0 的平凡路径恰 1 条）。\n\nn、m 最大 10 万、20 万，O(n·m) 的 Bellman-Ford 式迭代或 O(n²) 的朴素 Dijkstra 必超时，需要堆优化 Dijkstra + 最短路 DAG 上的 DP，整体 O(m log n) 量级。\n\n本题考查：图论（Dijkstra 最短路）、最短路 DAG 上的动态规划计数、0 权边边界处理、取模运算、多文件工程组织（模块拆分 + makefile）。\n\n## 输入格式\n\n- 第 1 行两个整数 `n m`。\n- 接下来 m 行，每行三个整数 `u v w`，表示一条 u → v、边权为 w 的有向边（无重边、无自环）。\n\n## 输出格式\n\n- 一行两个整数 `D cnt`：D 是 1 到 n 的最短路长度，cnt 是最短路条数对 1000000007 取模的结果。\n- 1 不可达 n 时输出 `-1 0`；n = 1 时输出 `0 1`。\n\n## 约束条件\n\n- 1 ≤ n ≤ 100000，0 ≤ m ≤ 200000\n- 1 ≤ u, v ≤ n，u ≠ v；无重边、无自环\n- 0 ≤ w ≤ 10^9\n- 最短路条数对 **1000000007** 取模\n- 保证不存在全部位于最短路上的 0 权环（最短路条数有限）\n- 时限 2000ms，内存 256MB；整体复杂度需 O(m log n) 量级，O(n·m) 或 O(n²) 必超时\n\n## 提交要求（多文件 make 工程）\n\n多文件提交**恰好包含这 6 个文件**（文件名固定）：\n\n| 文件 | 内容 |\n| --- | --- |\n| `graph.h` / `graph.C` | 建图 + Dijkstra 最短路模块 |\n| `paths.h` / `paths.C` | 最短路 DAG 上 DP 计数模块 |\n| `main.C` | 主程序：读入、调用两个模块、按格式输出 |\n| `makefile` | 构建规则（见下） |\n\n- **`.h` 只放声明 + 头文件保护宏**（`#ifndef/#define/#endif`），实现全部放 `.C`；\n- 每个 `.C` **首行 `#include` 对应的 `.h`**（如 `graph.C` 首行 `#include \"graph.h\"`）；\n- 允许使用 STL 容器与 `<queue>`、`<algorithm>` 等（本题考算法组织而非裸字符处理）；\n- `makefile` 要求：`TARGET = router`、`all` 生成 `router`、`clean` 删除 `.o` 与 `router`、`CXX = g++`、`CXXFLAGS = -std=c++20 -O2 -w -Wall`、每个 `.o` 写清依赖的 `.h`、**配方行以 Tab 缩进**（不是空格）、**不写死绝对路径**。参考模板（`$(CXX)`、`rm` 行前是 Tab）：\n\n```makefile\nCXX = g++\nCXXFLAGS = -std=c++20 -O2 -w -Wall\nOBJ = main.o graph.o paths.o\nTARGET = router\n\nall: $(TARGET)\n\n$(TARGET): $(OBJ)\n\t$(CXX) $(CXXFLAGS) -o $(TARGET) $(OBJ)\n\nmain.o: main.C graph.h paths.h\n\t$(CXX) $(CXXFLAGS) -c main.C\n\ngraph.o: graph.C graph.h\n\t$(CXX) $(CXXFLAGS) -c graph.C\n\npaths.o: paths.C paths.h graph.h\n\t$(CXX) $(CXXFLAGS) -c paths.C\n\nclean:\n\trm -f $(OBJ) $(TARGET)\n\n.PHONY: all clean\n```\n\n变量名与 `.o` 列表可自行调整，但行为必须满足：`make` 生成 `router`、`make clean` 清干净 `.o` 与可执行文件、每个 `.o` 依赖写全对应的 `.h`。\n\n## 样例输入\n\n```text\n4 5\n1 2 2\n2 4 2\n1 3 1\n3 4 3\n1 4 10\n```\n\n## 样例输出\n\n```text\n4 2\n```\n\n## 样例说明\n\n4 个结点 5 条边：\n\n- 1→2→4 长度 2+2 = **4**；\n- 1→3→4 长度 1+3 = **4**；\n- 1→4 直达长度 10。\n\n最短路长度 **D = 4**，等长最短路共 **2** 条（边序列分别为 (1→2, 2→4) 与 (1→3, 3→4)），故输出 `4 2`。\n",
-    "samples": [
-      {
-        "input": "4 5\n1 2 2\n2 4 2\n1 3 1\n3 4 3\n1 4 10",
-        "output": "4 2"
-      }
-    ],
-    "test_count": null
-  },
-  {
-    "id": "P11",
-    "title": "工程排程",
-    "contest_type": "oi",
-    "score": 100,
-    "compare_mode": "trim",
-    "limits": {
-      "time_ms": 2000,
-      "memory_mb": 256
-    },
-    "build": {
-      "mode": "make",
-      "command": "make",
-      "src": null,
-      "default_filename": null
-    },
-    "topic": "综合建模/图论/动态规划/贪心",
-    "difficulty": "综合",
-    "statement_md": "# P11 工程排程\n\n## 题目背景\n\n某工程项目包含 n 个任务，任务 i 的工期为 d_i 天。任务之间存在 m 条依赖关系：依赖 u → v 表示任务 u 必须完成后，任务 v 才能开始。工地有无限多台并行机器，任意任务在其全部前驱任务完成的那一刻即可立即开工，不受其他未完成任务影响。\n\n项目管理者需要评估两件事：\n\n1. 整个工程的最短完工时间（即最后一个任务完成的最早时刻）；\n2. 一种字典序最小的合法任务执行顺序（拓扑序），用于排班公示。\n\n若依赖关系成环（任务互相等待），则工程无法完成。\n\n## 输入格式\n\n第一行两个整数 n 和 m，表示任务数与依赖关系数。\n\n第二行 n 个正整数 d_1 d_2 … d_n，表示每个任务的工期。\n\n接下来 m 行，每行两个整数 u v（1 ≤ u, v ≤ n），表示一条依赖：任务 u 完成后任务 v 才能开始。\n\n## 输出格式\n\n若依赖成环，输出一行 `-1`。\n\n否则输出两行：\n\n- 第一行一个整数，表示最短完工时间；\n- 第二行 n 个整数，表示字典序最小的合法拓扑序，编号之间用一个空格分隔，行末无多余空格。\n\n## 约束条件\n\n- 1 ≤ n ≤ 100000\n- 0 ≤ m ≤ 200000\n- 1 ≤ d_i ≤ 10^9\n- 允许图不连通；输入无重边；可能有环\n- 时间限制 2000 ms，内存限制 256 MB\n\n## 提交要求（模块拆分）\n\n以多文件工程提交，结构固定如下（允许使用 STL）：\n\n- `topo.h` / `topo.C`：建图、入度计算、最小堆拓扑排序（就绪集每次取编号最小者）、环检测；\n- `critical.h` / `critical.C`：关键路径动态规划，求最短完工时间（最长加权路径）；\n- `main.C`：读入数据、调用上述模块、按格式输出；\n- `makefile`：TARGET=scheduler，提供 all 与 clean 目标；CXX = g++，CXXFLAGS = -std=c++20 -O2 -w -Wall，每个 .o 写清对 .h 的依赖。\n\n算法复杂度需达到 O((n + m) log n)。\n\n## 样例\n\n一组典型输入输出如下。\n\n## 样例输入\n```text\n4 3\n3 2 4 1\n1 2\n1 3\n3 4\n```\n\n## 样例输出\n```text\n8\n1 2 3 4\n```\n\n## 样例说明\n\n任务 1 无前驱，工期 3，在 [0, 3] 执行；任务 2 依赖 1，在 [3, 5] 执行；任务 3 依赖 1，在 [3, 7] 执行；任务 4 依赖 3，在 [7, 8] 执行。工程在时刻 8 完工，故最短完工时间为 8。\n\n就绪集每次取编号最小者得到的拓扑序为 1 2 3 4，是字典序最小的合法拓扑序。\n",
-    "samples": [
-      {
-        "input": "4 3\n3 2 4 1\n1 2\n1 3\n3 4",
-        "output": "8\n1 2 3 4"
-      }
-    ],
-    "test_count": null
-  },
-  {
     "id": "P2",
     "title": "字符串压缩",
     "contest_type": "oi",
@@ -356,7 +302,7 @@
     },
     "topic": "输入输出/分支循环/字符串/模拟",
     "difficulty": "基础",
-    "statement_md": "# P8 报数出圈\n\n> 难度：基础 · 单文件提交（main.cpp） · 构建：g++ -O2 -std=c++17 · 时限 1000ms / 256MB\n\n## 题目背景\n\nn 个人围成一圈，编号 1..n。从第 s 个人开始报数（s 报 1），报到 m 的人出圈；出圈者的下一个人重新从 1 报数；反复进行，直到所有人都出圈。请输出出圈顺序。\n\n本题考查：输入输出、条件与循环、字符串处理（人名可能带首尾空白，程序必须去除首尾空白）、简单模拟。\n\n## 输入格式\n\n- 第 1 行三个整数 `n s m`，用空格分隔。\n- 接下来 n 行，每行一个人名，第 i 行对应编号 i 的人。人名原串长度 1..20，**可能带首尾空格**；去除首尾空白后为非空、内部无空白的字符串。\n\n## 输出格式\n\nn 行，每行一个出圈者的人名（**已去除首尾空白**），按出圈先后顺序输出。\n\n## 约束条件\n\n- 1 ≤ n ≤ 1000\n- 1 ≤ s ≤ n\n- 1 ≤ m ≤ 1000\n- 人名原串长度 1..20；去首尾空白后非空、内部无空白\n- 时限 1000ms，内存 256MB\n\n## 提交要求\n\n- 提交**单个源文件** `main.cpp`（C++），由平台执行 `g++ -O2 -std=c++17 -o {bin} {src}` 构建。\n- 程序从标准输入读取数据、向标准输出写出结果；调试信息不得写入 stdout，`stderr` 评测忽略。\n\n## 样例输入\n\n```text\n5 1 2\n Alice \nBob\n  Carol\nDave \nEve\n```\n\n## 样例输出\n\n```text\nBob\nDave\nAlice\nEve\nCarol\n```\n\n## 样例说明\n\n5 人围圈，编号 1..5 依次是 Alice、Bob、Carol、Dave、Eve（名字里的首尾空格是输入的一部分）。从编号 1 开始报数，报到 2 的人出圈，出圈者的下一个人重新从 1 报数：\n\n1. Alice 报 1，Bob 报 2 → **Bob** 出圈；下一个人 Carol 重新从 1 报。\n2. Carol 报 1，Dave 报 2 → **Dave** 出圈；下一个人 Eve 重新从 1 报。\n3. Eve 报 1，Alice 报 2 → **Alice** 出圈；下一个人 Carol 重新从 1 报。\n4. Carol 报 1，Eve 报 2 → **Eve** 出圈；圈中只剩 Carol。\n5. **Carol** 出圈。\n\n出圈顺序：Bob、Dave、Alice、Eve、Carol。输出的每个人名都已去除首尾空白（如 ` Alice ` 输出为 `Alice`）。\n",
+    "statement_md": "# P8 报数出圈\r\n\r\n> 难度：基础 · 单文件提交（main.cpp） · 构建：g++ -O2 -std=c++17 · 时限 1000ms / 256MB\r\n\r\n## 题目背景\r\n\r\nn 个人围成一圈，编号 1..n。从第 s 个人开始报数（s 报 1），报到 m 的人出圈；出圈者的下一个人重新从 1 报数；反复进行，直到所有人都出圈。请输出出圈顺序。\r\n\r\n本题考查：输入输出、条件与循环、字符串处理（人名可能带首尾空白，程序必须去除首尾空白）、简单模拟。\r\n\r\n## 输入格式\r\n\r\n- 第 1 行三个整数 `n s m`，用空格分隔。\r\n- 接下来 n 行，每行一个人名，第 i 行对应编号 i 的人。人名原串长度 1..20，**可能带首尾空格**；去除首尾空白后为非空、内部无空白的字符串。\r\n\r\n## 输出格式\r\n\r\nn 行，每行一个出圈者的人名（**已去除首尾空白**），按出圈先后顺序输出。\r\n\r\n## 约束条件\r\n\r\n- 1 ≤ n ≤ 1000\r\n- 1 ≤ s ≤ n\r\n- 1 ≤ m ≤ 1000\r\n- 人名原串长度 1..20；去首尾空白后非空、内部无空白\r\n- 时限 1000ms，内存 256MB\r\n\r\n## 提交要求\r\n\r\n- 提交**单个源文件** `main.cpp`（C++），由平台执行 `g++ -O2 -std=c++17 -o {bin} {src}` 构建。\r\n- 程序从标准输入读取数据、向标准输出写出结果；调试信息不得写入 stdout，`stderr` 评测忽略。\r\n\r\n## 样例输入\r\n\r\n```text\r\n5 1 2\r\n Alice \r\nBob\r\n  Carol\r\nDave \r\nEve\r\n```\r\n\r\n## 样例输出\r\n\r\n```text\r\nBob\r\nDave\r\nAlice\r\nEve\r\nCarol\r\n```\r\n\r\n## 样例说明\r\n\r\n5 人围圈，编号 1..5 依次是 Alice、Bob、Carol、Dave、Eve（名字里的首尾空格是输入的一部分）。从编号 1 开始报数，报到 2 的人出圈，出圈者的下一个人重新从 1 报数：\r\n\r\n1. Alice 报 1，Bob 报 2 → **Bob** 出圈；下一个人 Carol 重新从 1 报。\r\n2. Carol 报 1，Dave 报 2 → **Dave** 出圈；下一个人 Eve 重新从 1 报。\r\n3. Eve 报 1，Alice 报 2 → **Alice** 出圈；下一个人 Carol 重新从 1 报。\r\n4. Carol 报 1，Eve 报 2 → **Eve** 出圈；圈中只剩 Carol。\r\n5. **Carol** 出圈。\r\n\r\n出圈顺序：Bob、Dave、Alice、Eve、Carol。输出的每个人名都已去除首尾空白（如 ` Alice ` 输出为 `Alice`）。\r\n",
     "samples": [
       {
         "input": "5 1 2\n Alice \nBob\n  Carol\nDave \nEve",
@@ -383,11 +329,65 @@
     },
     "topic": "枚举/排序/二分/贪心",
     "difficulty": "进阶",
-    "statement_md": "# P9 区间规划器\n\n> 难度：进阶 · 多文件 make 工程（恰好 4 个文件） · 构建：`make` → `planner` · 时限 2000ms / 256MB\n\n## 题目背景\n\n给定 n 个闭区间 [l, r] 与 q 个查询点 x，请在同一个程序里完成两件事：\n\n1. 计算**最大两两不相交区间个数**（区间调度贪心：按右端点升序安排）。注意：**两区间共享端点即算相交**——[1,2] 与 [2,3] 不能同时选，[1,2] 与 [3,4] 可以同时选。\n2. 对每个查询点 x，回答**有多少个区间包含 x**（l ≤ x ≤ r，端点算包含）。\n\nn、q 最大 20 万，逐区间逐查询的 O(n·q) 扫描或 O(n²) 枚举都会超时，需要排序 + 二分把整体做到 O((n+q) log n) 量级。\n\n本题考查：枚举与贪心（区间调度）、排序、二分检索、多文件工程组织（模块拆分 + makefile）。\n\n## 输入格式\n\n- 第 1 行两个整数 `n q`。\n- 接下来 n 行，每行两个整数 `l r`，表示一个闭区间 [l, r]（0 ≤ l ≤ r ≤ 10^9）。\n- 再接下来 q 行，每行一个整数 x（0 ≤ x ≤ 10^9）。\n\n## 输出格式\n\n- 第 1 行一个整数：最大两两不相交区间个数。\n- 接下来 q 行，每行一个整数：第 j 行是第 j 个查询点 x_j 被多少个区间包含。\n\n## 约束条件\n\n- 1 ≤ n ≤ 200000，1 ≤ q ≤ 200000\n- 0 ≤ l ≤ r ≤ 10^9，0 ≤ x ≤ 10^9\n- 共享端点即算相交：[1,2] 与 [2,3] 不能同时选\n- 包含判据：l ≤ x ≤ r（闭区间，端点值算包含）\n- 时限 2000ms，内存 256MB；整体复杂度需 O((n+q) log n) 量级，O(n²) 必超时\n\n## 提交要求（多文件 make 工程）\n\n多文件提交**恰好包含这 4 个文件**（文件名固定）：\n\n| 文件 | 内容 |\n| --- | --- |\n| `interval.h` / `interval.C` | 区间排序与贪心（最大不相交区间数）模块 |\n| `query.h` / `query.C` | 二分查询（查询点被包含计数）模块 |\n| `main.C` | 主程序：读入、调用两个模块、按格式输出 |\n| `makefile` | 构建规则（见下） |\n\n- **`.h` 只放声明 + 头文件保护宏**（`#ifndef/#define/#endif`），实现全部放 `.C`；\n- 每个 `.C` **首行 `#include` 对应的 `.h`**（如 `interval.C` 首行 `#include \"interval.h\"`）；\n- 允许使用 STL 容器与 `<algorithm>`（本题考算法组织而非裸字符处理）；\n- `makefile` 要求：`TARGET = planner`、`all` 生成 `planner`、`clean` 删除 `.o` 与 `planner`、`CXX = g++`、`CXXFLAGS = -std=c++20 -O2 -w -Wall`、每个 `.o` 写清依赖的 `.h`、**配方行以 Tab 缩进**（不是空格）、**不写死绝对路径**。参考模板（`$(CXX)`、`rm` 行前是 Tab）：\n\n```makefile\nCXX = g++\nCXXFLAGS = -std=c++20 -O2 -w -Wall\nOBJ = main.o interval.o query.o\nTARGET = planner\n\nall: $(TARGET)\n\n$(TARGET): $(OBJ)\n\t$(CXX) $(CXXFLAGS) -o $(TARGET) $(OBJ)\n\nmain.o: main.C interval.h query.h\n\t$(CXX) $(CXXFLAGS) -c main.C\n\ninterval.o: interval.C interval.h\n\t$(CXX) $(CXXFLAGS) -c interval.C\n\nquery.o: query.C query.h interval.h\n\t$(CXX) $(CXXFLAGS) -c query.C\n\nclean:\n\trm -f $(OBJ) $(TARGET)\n\n.PHONY: all clean\n```\n\n变量名与 `.o` 列表可自行调整，但行为必须满足：`make` 生成 `planner`、`make clean` 清干净 `.o` 与可执行文件、每个 `.o` 依赖写全对应的 `.h`。\n\n## 样例输入\n\n```text\n4 3\n1 3\n2 5\n4 6\n7 8\n2\n4\n7\n```\n\n## 样例输出\n\n```text\n3\n2\n2\n1\n```\n\n## 样例说明\n\n4 个区间 [1,3]、[2,5]、[4,6]、[7,8]，3 个查询点 2、4、7：\n\n- 最大不相交：选 [1,3]、[4,6]、[7,8] 共 **3** 个（[2,5] 与 [1,3] 相交，与 [4,6] 也相交，不能选）；\n- x=2：被 [1,3]、[2,5] 包含 → **2**；\n- x=4：被 [2,5]、[4,6] 包含 → **2**；\n- x=7：被 [7,8] 包含 → **1**。\n",
+    "statement_md": "# P9 区间规划器\r\n\r\n> 难度：进阶 · 多文件 make 工程（恰好 4 个文件） · 构建：`make` → `planner` · 时限 2000ms / 256MB\r\n\r\n## 题目背景\r\n\r\n给定 n 个闭区间 [l, r] 与 q 个查询点 x，请在同一个程序里完成两件事：\r\n\r\n1. 计算**最大两两不相交区间个数**（区间调度贪心：按右端点升序安排）。注意：**两区间共享端点即算相交**——[1,2] 与 [2,3] 不能同时选，[1,2] 与 [3,4] 可以同时选。\r\n2. 对每个查询点 x，回答**有多少个区间包含 x**（l ≤ x ≤ r，端点算包含）。\r\n\r\nn、q 最大 20 万，逐区间逐查询的 O(n·q) 扫描或 O(n²) 枚举都会超时，需要排序 + 二分把整体做到 O((n+q) log n) 量级。\r\n\r\n本题考查：枚举与贪心（区间调度）、排序、二分检索、多文件工程组织（模块拆分 + makefile）。\r\n\r\n## 输入格式\r\n\r\n- 第 1 行两个整数 `n q`。\r\n- 接下来 n 行，每行两个整数 `l r`，表示一个闭区间 [l, r]（0 ≤ l ≤ r ≤ 10^9）。\r\n- 再接下来 q 行，每行一个整数 x（0 ≤ x ≤ 10^9）。\r\n\r\n## 输出格式\r\n\r\n- 第 1 行一个整数：最大两两不相交区间个数。\r\n- 接下来 q 行，每行一个整数：第 j 行是第 j 个查询点 x_j 被多少个区间包含。\r\n\r\n## 约束条件\r\n\r\n- 1 ≤ n ≤ 200000，1 ≤ q ≤ 200000\r\n- 0 ≤ l ≤ r ≤ 10^9，0 ≤ x ≤ 10^9\r\n- 共享端点即算相交：[1,2] 与 [2,3] 不能同时选\r\n- 包含判据：l ≤ x ≤ r（闭区间，端点值算包含）\r\n- 时限 2000ms，内存 256MB；整体复杂度需 O((n+q) log n) 量级，O(n²) 必超时\r\n\r\n## 提交要求（多文件 make 工程）\r\n\r\n多文件提交**恰好包含这 4 个文件**（文件名固定）：\r\n\r\n| 文件 | 内容 |\r\n| --- | --- |\r\n| `interval.h` / `interval.C` | 区间排序与贪心（最大不相交区间数）模块 |\r\n| `query.h` / `query.C` | 二分查询（查询点被包含计数）模块 |\r\n| `main.C` | 主程序：读入、调用两个模块、按格式输出 |\r\n| `makefile` | 构建规则（见下） |\r\n\r\n- **`.h` 只放声明 + 头文件保护宏**（`#ifndef/#define/#endif`），实现全部放 `.C`；\r\n- 每个 `.C` **首行 `#include` 对应的 `.h`**（如 `interval.C` 首行 `#include \"interval.h\"`）；\r\n- 允许使用 STL 容器与 `<algorithm>`（本题考算法组织而非裸字符处理）；\r\n- `makefile` 要求：`TARGET = planner`、`all` 生成 `planner`、`clean` 删除 `.o` 与 `planner`、`CXX = g++`、`CXXFLAGS = -std=c++20 -O2 -w -Wall`、每个 `.o` 写清依赖的 `.h`、**配方行以 Tab 缩进**（不是空格）、**不写死绝对路径**。参考模板（`$(CXX)`、`rm` 行前是 Tab）：\r\n\r\n```makefile\r\nCXX = g++\r\nCXXFLAGS = -std=c++20 -O2 -w -Wall\r\nOBJ = main.o interval.o query.o\r\nTARGET = planner\r\n\r\nall: $(TARGET)\r\n\r\n$(TARGET): $(OBJ)\r\n\t$(CXX) $(CXXFLAGS) -o $(TARGET) $(OBJ)\r\n\r\nmain.o: main.C interval.h query.h\r\n\t$(CXX) $(CXXFLAGS) -c main.C\r\n\r\ninterval.o: interval.C interval.h\r\n\t$(CXX) $(CXXFLAGS) -c interval.C\r\n\r\nquery.o: query.C query.h interval.h\r\n\t$(CXX) $(CXXFLAGS) -c query.C\r\n\r\nclean:\r\n\trm -f $(OBJ) $(TARGET)\r\n\r\n.PHONY: all clean\r\n```\r\n\r\n变量名与 `.o` 列表可自行调整，但行为必须满足：`make` 生成 `planner`、`make clean` 清干净 `.o` 与可执行文件、每个 `.o` 依赖写全对应的 `.h`。\r\n\r\n## 样例输入\r\n\r\n```text\r\n4 3\r\n1 3\r\n2 5\r\n4 6\r\n7 8\r\n2\r\n4\r\n7\r\n```\r\n\r\n## 样例输出\r\n\r\n```text\r\n3\r\n2\r\n2\r\n1\r\n```\r\n\r\n## 样例说明\r\n\r\n4 个区间 [1,3]、[2,5]、[4,6]、[7,8]，3 个查询点 2、4、7：\r\n\r\n- 最大不相交：选 [1,3]、[4,6]、[7,8] 共 **3** 个（[2,5] 与 [1,3] 相交，与 [4,6] 也相交，不能选）；\r\n- x=2：被 [1,3]、[2,5] 包含 → **2**；\r\n- x=4：被 [2,5]、[4,6] 包含 → **2**；\r\n- x=7：被 [7,8] 包含 → **1**。\r\n",
     "samples": [
       {
         "input": "4 3\n1 3\n2 5\n4 6\n7 8\n2\n4\n7",
         "output": "3\n2\n2\n1"
+      }
+    ],
+    "test_count": null
+  },
+  {
+    "id": "P10",
+    "title": "最短路计数",
+    "contest_type": "oi",
+    "score": 100,
+    "compare_mode": "trim",
+    "limits": {
+      "time_ms": 2000,
+      "memory_mb": 256
+    },
+    "build": {
+      "mode": "make",
+      "command": "make",
+      "src": null,
+      "default_filename": null
+    },
+    "topic": "搜索/图论/动态规划",
+    "difficulty": "提高",
+    "statement_md": "# P10 最短路计数\r\n\r\n> 难度：提高 · 多文件 make 工程（恰好 6 个文件） · 构建：`make` → `router` · 时限 2000ms / 256MB\r\n\r\n## 题目背景\r\n\r\n给定 n 个结点的有向带权图（结点编号 1..n，边权 w ≥ 0，**无重边、无自环**）。求从结点 1 到结点 n 的：\r\n\r\n1. **最短路长度 D**；\r\n2. **最短路的条数**（对 1000000007 取模）。\r\n\r\n两条路径不同 ⟺ **边序列不同**（走过相同边序列视为同一条路径；允许经过重复结点，只要边序列不同就算不同路径）。题目保证最短路条数有限（即不存在全部位于最短路上的 0 权环）。\r\n\r\n注意边权可以为 **0**：0 权边会制造大量**等长**的最短路，计数必须把它们全部算上，并按拓扑次序在最短路 DAG 上递推——同 dist 层内若不按拓扑序推进会漏算。\r\n\r\n- 若 1 不可达 n：输出 `-1 0`；\r\n- 若 n = 1：输出 `0 1`（起点即终点，长度为 0 的平凡路径恰 1 条）。\r\n\r\nn、m 最大 10 万、20 万，O(n·m) 的 Bellman-Ford 式迭代或 O(n²) 的朴素 Dijkstra 必超时，需要堆优化 Dijkstra + 最短路 DAG 上的 DP，整体 O(m log n) 量级。\r\n\r\n本题考查：图论（Dijkstra 最短路）、最短路 DAG 上的动态规划计数、0 权边边界处理、取模运算、多文件工程组织（模块拆分 + makefile）。\r\n\r\n## 输入格式\r\n\r\n- 第 1 行两个整数 `n m`。\r\n- 接下来 m 行，每行三个整数 `u v w`，表示一条 u → v、边权为 w 的有向边（无重边、无自环）。\r\n\r\n## 输出格式\r\n\r\n- 一行两个整数 `D cnt`：D 是 1 到 n 的最短路长度，cnt 是最短路条数对 1000000007 取模的结果。\r\n- 1 不可达 n 时输出 `-1 0`；n = 1 时输出 `0 1`。\r\n\r\n## 约束条件\r\n\r\n- 1 ≤ n ≤ 100000，0 ≤ m ≤ 200000\r\n- 1 ≤ u, v ≤ n，u ≠ v；无重边、无自环\r\n- 0 ≤ w ≤ 10^9\r\n- 最短路条数对 **1000000007** 取模\r\n- 保证不存在全部位于最短路上的 0 权环（最短路条数有限）\r\n- 时限 2000ms，内存 256MB；整体复杂度需 O(m log n) 量级，O(n·m) 或 O(n²) 必超时\r\n\r\n## 提交要求（多文件 make 工程）\r\n\r\n多文件提交**恰好包含这 6 个文件**（文件名固定）：\r\n\r\n| 文件 | 内容 |\r\n| --- | --- |\r\n| `graph.h` / `graph.C` | 建图 + Dijkstra 最短路模块 |\r\n| `paths.h` / `paths.C` | 最短路 DAG 上 DP 计数模块 |\r\n| `main.C` | 主程序：读入、调用两个模块、按格式输出 |\r\n| `makefile` | 构建规则（见下） |\r\n\r\n- **`.h` 只放声明 + 头文件保护宏**（`#ifndef/#define/#endif`），实现全部放 `.C`；\r\n- 每个 `.C` **首行 `#include` 对应的 `.h`**（如 `graph.C` 首行 `#include \"graph.h\"`）；\r\n- 允许使用 STL 容器与 `<queue>`、`<algorithm>` 等（本题考算法组织而非裸字符处理）；\r\n- `makefile` 要求：`TARGET = router`、`all` 生成 `router`、`clean` 删除 `.o` 与 `router`、`CXX = g++`、`CXXFLAGS = -std=c++20 -O2 -w -Wall`、每个 `.o` 写清依赖的 `.h`、**配方行以 Tab 缩进**（不是空格）、**不写死绝对路径**。参考模板（`$(CXX)`、`rm` 行前是 Tab）：\r\n\r\n```makefile\r\nCXX = g++\r\nCXXFLAGS = -std=c++20 -O2 -w -Wall\r\nOBJ = main.o graph.o paths.o\r\nTARGET = router\r\n\r\nall: $(TARGET)\r\n\r\n$(TARGET): $(OBJ)\r\n\t$(CXX) $(CXXFLAGS) -o $(TARGET) $(OBJ)\r\n\r\nmain.o: main.C graph.h paths.h\r\n\t$(CXX) $(CXXFLAGS) -c main.C\r\n\r\ngraph.o: graph.C graph.h\r\n\t$(CXX) $(CXXFLAGS) -c graph.C\r\n\r\npaths.o: paths.C paths.h graph.h\r\n\t$(CXX) $(CXXFLAGS) -c paths.C\r\n\r\nclean:\r\n\trm -f $(OBJ) $(TARGET)\r\n\r\n.PHONY: all clean\r\n```\r\n\r\n变量名与 `.o` 列表可自行调整，但行为必须满足：`make` 生成 `router`、`make clean` 清干净 `.o` 与可执行文件、每个 `.o` 依赖写全对应的 `.h`。\r\n\r\n## 样例输入\r\n\r\n```text\r\n4 5\r\n1 2 2\r\n2 4 2\r\n1 3 1\r\n3 4 3\r\n1 4 10\r\n```\r\n\r\n## 样例输出\r\n\r\n```text\r\n4 2\r\n```\r\n\r\n## 样例说明\r\n\r\n4 个结点 5 条边：\r\n\r\n- 1→2→4 长度 2+2 = **4**；\r\n- 1→3→4 长度 1+3 = **4**；\r\n- 1→4 直达长度 10。\r\n\r\n最短路长度 **D = 4**，等长最短路共 **2** 条（边序列分别为 (1→2, 2→4) 与 (1→3, 3→4)），故输出 `4 2`。\r\n",
+    "samples": [
+      {
+        "input": "4 5\n1 2 2\n2 4 2\n1 3 1\n3 4 3\n1 4 10",
+        "output": "4 2"
+      }
+    ],
+    "test_count": null
+  },
+  {
+    "id": "P11",
+    "title": "工程排程",
+    "contest_type": "oi",
+    "score": 100,
+    "compare_mode": "trim",
+    "limits": {
+      "time_ms": 2000,
+      "memory_mb": 256
+    },
+    "build": {
+      "mode": "make",
+      "command": "make",
+      "src": null,
+      "default_filename": null
+    },
+    "topic": "综合建模/图论/动态规划/贪心",
+    "difficulty": "综合",
+    "statement_md": "# P11 工程排程\r\n\r\n## 题目背景\r\n\r\n某工程项目包含 n 个任务，任务 i 的工期为 d_i 天。任务之间存在 m 条依赖关系：依赖 u → v 表示任务 u 必须完成后，任务 v 才能开始。工地有无限多台并行机器，任意任务在其全部前驱任务完成的那一刻即可立即开工，不受其他未完成任务影响。\r\n\r\n项目管理者需要评估两件事：\r\n\r\n1. 整个工程的最短完工时间（即最后一个任务完成的最早时刻）；\r\n2. 一种字典序最小的合法任务执行顺序（拓扑序），用于排班公示。\r\n\r\n若依赖关系成环（任务互相等待），则工程无法完成。\r\n\r\n## 输入格式\r\n\r\n第一行两个整数 n 和 m，表示任务数与依赖关系数。\r\n\r\n第二行 n 个正整数 d_1 d_2 … d_n，表示每个任务的工期。\r\n\r\n接下来 m 行，每行两个整数 u v（1 ≤ u, v ≤ n），表示一条依赖：任务 u 完成后任务 v 才能开始。\r\n\r\n## 输出格式\r\n\r\n若依赖成环，输出一行 `-1`。\r\n\r\n否则输出两行：\r\n\r\n- 第一行一个整数，表示最短完工时间；\r\n- 第二行 n 个整数，表示字典序最小的合法拓扑序，编号之间用一个空格分隔，行末无多余空格。\r\n\r\n## 约束条件\r\n\r\n- 1 ≤ n ≤ 100000\r\n- 0 ≤ m ≤ 200000\r\n- 1 ≤ d_i ≤ 10^9\r\n- 允许图不连通；输入无重边；可能有环\r\n- 时间限制 2000 ms，内存限制 256 MB\r\n\r\n## 提交要求（模块拆分）\r\n\r\n以多文件工程提交，结构固定如下（允许使用 STL）：\r\n\r\n- `topo.h` / `topo.C`：建图、入度计算、最小堆拓扑排序（就绪集每次取编号最小者）、环检测；\r\n- `critical.h` / `critical.C`：关键路径动态规划，求最短完工时间（最长加权路径）；\r\n- `main.C`：读入数据、调用上述模块、按格式输出；\r\n- `makefile`：TARGET=scheduler，提供 all 与 clean 目标；CXX = g++，CXXFLAGS = -std=c++20 -O2 -w -Wall，每个 .o 写清对 .h 的依赖。\r\n\r\n算法复杂度需达到 O((n + m) log n)。\r\n\r\n## 样例\r\n\r\n一组典型输入输出如下。\r\n\r\n## 样例输入\r\n```text\r\n4 3\r\n3 2 4 1\r\n1 2\r\n1 3\r\n3 4\r\n```\r\n\r\n## 样例输出\r\n```text\r\n8\r\n1 2 3 4\r\n```\r\n\r\n## 样例说明\r\n\r\n任务 1 无前驱，工期 3，在 [0, 3] 执行；任务 2 依赖 1，在 [3, 5] 执行；任务 3 依赖 1，在 [3, 7] 执行；任务 4 依赖 3，在 [7, 8] 执行。工程在时刻 8 完工，故最短完工时间为 8。\r\n\r\n就绪集每次取编号最小者得到的拓扑序为 1 2 3 4，是字典序最小的合法拓扑序。\r\n",
+    "samples": [
+      {
+        "input": "4 3\n3 2 4 1\n1 2\n1 3\n3 4",
+        "output": "8\n1 2 3 4"
       }
     ],
     "test_count": null

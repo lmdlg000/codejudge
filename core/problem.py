@@ -27,6 +27,15 @@ def is_safe_name(name: str) -> bool:
     return True
 
 
+def problem_id_key(name: str) -> tuple:
+    """题号排序键：P<n> 按数值升序（P2 < P10），非标准 id 排最后按字典序。
+    列表/打包/CLI 一律用它，避免 'P10' 排在 'P2' 前的字典序陷阱。"""
+    m = re.match(r"^P(\d+)$", name)
+    if m:
+        return (0, int(m.group(1)), "")
+    return (1, 0, name)
+
+
 @dataclass
 class TestCase:
     name: str
