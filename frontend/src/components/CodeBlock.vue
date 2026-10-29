@@ -5,6 +5,7 @@
  * 复制成功瞬时切「已复制」1.2s。
  */
 import { ref, computed } from 'vue'
+import { highlightCode } from '../utils/hljs.js'
 
 const props = defineProps({
   /** 顶部条左侧标签，如「样例输入」「bash」 */
@@ -13,13 +14,16 @@ const props = defineProps({
   copyLabel: { type: String, default: '复制样例' },
   code: { type: String, default: '' },
   /** 禁用复制按钮 */
-  noCopy: { type: Boolean, default: false }
+  noCopy: { type: Boolean, default: false },
+  /** 围栏语言（bash/cpp/makefile…）；空=纯文本（样例 I/O 数据用） */
+  language: { type: String, default: '' }
 })
 
 const copied = ref(false)
 let timer = null
 
 const displayCode = computed(() => (props.code == null ? '' : String(props.code)))
+const highlighted = computed(() => (props.language ? highlightCode(displayCode.value, props.language) : ''))
 
 async function copy() {
   try {
@@ -46,7 +50,8 @@ async function copy() {
         @click="copy"
       >{{ copied ? '已复制' : copyLabel }}</button>
     </div>
-    <pre class="code-block__body"><code>{{ displayCode }}</code></pre>
+    <!-- eslint-disable-next-line vue/no-v-html —— highlightCode 输出可信 token span -->
+    <pre class="code-block__body"><code v-if="highlighted" class="hljs" v-html="highlighted"></code><code v-else>{{ displayCode }}</code></pre>
   </figure>
 </template>
 

@@ -192,7 +192,7 @@ const REDLINE = `禁止把用户路径直接拼进 shell=True；构建命令模�
       <!-- 区块 4：CLI 常用命令 -->
       <section id="cli" class="section" aria-labelledby="cli-title">
         <h2 id="cli-title">CLI 常用命令</h2>
-        <CodeBlock label="bash" copy-label="复制命令" :code="CLI_CMDS" />
+        <CodeBlock label="bash" copy-label="复制命令" :code="CLI_CMDS" language="bash" />
         <p class="section__note">
           预期输出：控制台打印逐用例表格，末行输出得分横幅：<code class="inline-code">通过 4/4 · 通过率 100% · 得分 100/100</code>
         </p>

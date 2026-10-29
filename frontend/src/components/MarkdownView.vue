@@ -5,6 +5,7 @@
  */
 import { computed } from 'vue'
 import MarkdownIt from 'markdown-it'
+import { highlightCode } from '../utils/hljs.js'
 
 const props = defineProps({
   source: { type: String, default: '' },
@@ -14,7 +15,10 @@ const props = defineProps({
 const md = new MarkdownIt({
   html: false,
   linkify: true,
-  breaks: false
+  breaks: false,
+  // 围栏语言命中注册表（cpp/makefile/bash/json/python…）→ token 高亮；
+  // 未注册或 ```text → 返回 ''，markdown-it 回退纯文本转义（样例 I/O 保持素文本）
+  highlight: (str, lang) => highlightCode(str, lang)
 })
 
 const html = computed(() => {

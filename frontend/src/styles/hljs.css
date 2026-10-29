@@ -1,0 +1,93 @@
+/**
+ * 语法高亮 token 配色 —— 沿用终端色板（tokens.css 的 --code-* 语义变量）。
+ * 作用域限定在题面 (.md-body) 与代码块 (.code-block) 内，不影响其他区域。
+ */
+
+.md-body .hljs-keyword,
+.md-body .hljs-selector-tag,
+.md-body .hljs-literal,
+.md-body .hljs-section,
+.md-body .hljs-doctag,
+.code-block .hljs-keyword,
+.code-block .hljs-selector-tag,
+.code-block .hljs-literal,
+.code-block .hljs-section,
+.code-block .hljs-doctag {
+  color: #c792ea; /* 紫：关键字/控制流（同 --verdict-ce-text） */
+}
+
+.md-body .hljs-type,
+.md-body .hljs-built_in,
+.md-body .hljs-class .hljs-title,
+.md-body .hljs-title.class_,
+.code-block .hljs-type,
+.code-block .hljs-built_in,
+.code-block .hljs-class .hljs-title,
+.code-block .hljs-title.class_ {
+  color: var(--info-text); /* 青：类型/内建 */
+}
+
+.md-body .hljs-title,
+.md-body .hljs-title.function_,
+.md-body .hljs-name,
+.code-block .hljs-title,
+.code-block .hljs-title.function_,
+.code-block .hljs-name {
+  color: var(--primary); /* 绿：函数/类名 */
+}
+
+.md-body .hljs-string,
+.md-body .hljs-regexp,
+.md-body .hljs-addition,
+.code-block .hljs-string,
+.code-block .hljs-regexp,
+.code-block .hljs-addition {
+  color: var(--code-string);
+}
+
+.md-body .hljs-number,
+.md-body .hljs-symbol,
+.md-body .hljs-bullet,
+.code-block .hljs-number,
+.code-block .hljs-symbol,
+.code-block .hljs-bullet {
+  color: var(--code-number);
+}
+
+.md-body .hljs-comment,
+.md-body .hljs-quote,
+.md-body .hljs-meta,
+.code-block .hljs-comment,
+.code-block .hljs-quote,
+.code-block .hljs-meta {
+  color: var(--code-comment);
+  font-style: italic;
+}
+
+.md-body .hljs-attr,
+.md-body .hljs-attribute,
+.md-body .hljs-variable,
+.md-body .hljs-template-variable,
+.md-body .hljs-params,
+.code-block .hljs-attr,
+.code-block .hljs-attribute,
+.code-block .hljs-variable,
+.code-block .hljs-template-variable,
+.code-block .hljs-params {
+  color: var(--code-text);
+}
+
+.md-body .hljs-deletion,
+.code-block .hljs-deletion {
+  color: var(--danger-text);
+}
+
+.md-body .hljs-emphasis,
+.code-block .hljs-emphasis {
+  font-style: italic;
+}
+
+.md-body .hljs-strong,
+.code-block .hljs-strong {
+  font-weight: 700;
+}
