@@ -16,7 +16,7 @@
 | 头文件保护宏、`.h` 只放声明、`.C` 放实现、`makefile` 的 `all`/`clean`（R9） | 第 3 周 *Header Files / Separate Declaration and Definition / makefile*；P6 同款要求 |
 | `char*` 存数字串、**高位在前**（MSD first）、手写十进制加法/乘法 | 第 7 周 `char`/`char*` 处理；第 3 周 `new`/`delete[]` |
 | 资源三件套：析构、拷贝构造、`operator=`（深拷贝、自赋值安全） | 第 5~6 周 *Why Copy Constructor / Deep copy*；R5 |
-| 运算符重载：友元 `operator+`、成员 `*`、复合赋值 `+=` `*=`、`friend operator<<`、六个比较 | 第 6 周 slide 21~29（`operator+`/`++`/`[]`）；P5 的重载经验 |
+| 运算符重载：二元 `+` `*`（两者形式一致：同为友元或同为成员）、复合赋值 `+=` `*=`、`friend operator<<`、六个比较 | 第 6 周 slide 21~29（`operator+`/`++`/`[]`）；P5 的重载经验 |
 | `const` 正确性：比较与输出不修改对象 | 第 7 周 *const*；R8 |
 | 内存安全：0 errors、0 leaks（`valgrind` / ASan） | 第 6 周 *Valgrind reports*；R4/R7 |
 
@@ -69,9 +69,13 @@ public:
 - 私有数据成员固定为 `bool isZero; size_t len; size_t size; char* s;` 四个，**名字、类型、个数都不得改**；在此之外可以增加私有辅助函数，但 public 接口一个都不能动；
 - 四个成员的**语义与不变式**见第 6 节第 2 条（`isZero` 是"是否为 0"的权威标志，比较与输出都要看它）；
 - `BigInt(size_t v = 0)` 的**默认参数不能去掉**：`main.C` 里 `BigInt y3(v);` 用 `size_t` 构造，将来隐藏用例还会用到无参构造（`BigInt z;` 即 0）；
-- 二元 `+` 是**友元函数**（不修改任何一方，返回新对象）；`*` 是成员函数（同样不修改任何一方）；`+=` / `*=` 修改自身并返回 `*this`（供 `(x3 += x4)` 这样链式输出）。
+- 二元 `+`/`*` **不修改任何一方**，返回新对象；`+` 和 `*` 要么**都是友元函数**，要么**都是成员函数**（不能一个友元一个成员，见下文「实现提示」）；`+=` / `*=` 修改自身并返回 `*this`（供 `(x3 += x4)` 这样链式输出）。
 
-**加法实现提示（推荐写法，签名以本节声明为准）**：
+**实现提示（推荐写法，签名以本节声明为准）**：
+
+**推荐实现顺序**：先把 `+=` 做出来，`+` 直接调用 `+=`（见下）；同理再把 `*=` 做出来，`*` 直接调用 `*=`。这样 `+`/`*` 都不用重复实现竖式逻辑。
+
+**形式一致性（硬性要求）**：`+` 和 `*` 要么**都是友元函数**，要么**都是成员函数**，不能一个友元一个成员。上文类声明给出的是推荐形式（`+` 为友元、`*` 为成员）；若你两个都改成成员函数（`BigInt operator+(const BigInt& right) const;` + `BigInt operator*(const BigInt& right) const;`），只要**两者形式一致**且功能正确，同样算对。
 
 `BigInt& operator+=(const BigInt& right)` 的推荐算法（课件 Project7 要求，8 步）：
 
@@ -84,13 +88,21 @@ public:
 7. 删除 `this` 的数组，生成一个新数组，把 `temp` 的数字**反向赋值**给这个数组，正确处理 `this` 的 `size` 和 `len`；
 8. 返还 `*this`。
 
-`friend BigInt operator+(const BigInt& left, const BigInt& right)` 的推荐算法（3 步）：
+`operator+` 的推荐实现（3 步，直接调用 `+=`）：
 
 1. `BigInt temp = left;`
 2. `temp += right;`
 3. 返还 `temp`。
 
-> 注意：第 4~5 步必须从**低位（串尾）向高位**算起；第 7 步反向赋值是因为 `temp` 是从低位往高位填充的。课件强调 **Must store the highest order digit first!!!**（最高位必须存在最前），最终 `s[0]` 是最高位。
+`BigInt& operator*=(const BigInt& right)`：竖式乘法（结果位数最多 `len_a + len_b`，任何数乘 0 得 0），同样要防 `a *= a` 别名。
+
+`operator*` 的推荐实现（同 `+`，直接调用 `*=`）：
+
+1. `BigInt temp = left;`
+2. `temp *= right;`
+3. 返还 `temp`。
+
+> 注意：`+=` 第 4~5 步必须从**低位（串尾）向高位**算起；第 7 步反向赋值是因为 `temp` 是从低位往高位填充的。课件强调 **Must store the highest order digit first!!!**（最高位必须存在最前），最终 `s[0]` 是最高位。
 
 **`main.C`（题目给定，请原样粘贴，不得修改）**：
 
@@ -196,9 +208,9 @@ clean:
      诊断后**取前缀数字部分**（全非法则为 0）——`stderr` 评测忽略；
    - `BigInt(const BigInt& o)`：**深拷贝**（`new char[o.size]` 后逐位复制，绝不能让两个对象共用一块缓冲）。
 4. **`operator=`**：自赋值安全（`this == &o` 直接返回）；先分配新的、再 `delete[]` 旧的（P6 常见错误 8 的教训）；返回 `*this`。
-5. **加法 `+` / `+=`**：`+=` 是原地修改成员函数（算法见上文「加法实现提示」8 步）；`+` 是友元函数，推荐实现为 `BigInt temp = left; temp += right; return temp;`。逐位竖式，**从低位到高位**算（`s[len-1]` 是最低位），进位最多 1，结果位数最多 `max(len_a, len_b) + 1`；注意最高位进位要保留（`9999999999 + 1 = 10000000000`）。
-6. **乘法 `*` / `*=`**：竖式乘法——对 `o` 的每一位（从低到高）乘上 `*this` 的每一位，累加进位到结果数组对应位；结果位数最多 `len_a + len_b`（`99 * 99 = 9801` 是 4 位 = 2+2；`9999999999^2 = 99999999980000000001` 是 20 位 = 10+10）；任何数乘 0 得 0。
-7. **`+=` / `*=` 的返回**：修改自身后返回 `*this` 的引用（`main.C` 里 `(x3 += x4)`、`(y4 *= y5)` 要能直接进 `operator<<`）；`friend operator+` 返回新对象（`BigInt temp = left; temp += right; return temp;`）。注意 `a += a`、`a *= a` 这种**别名**情况（自己加/乘自己不能把源数据写坏）。
+5. **加法 `+` / `+=`**：`+=` 是原地修改成员函数（算法见上文「实现提示」8 步）；`+` 推荐直接调用 `+=`（`BigInt temp = left; temp += right; return temp;`）。逐位竖式，**从低位到高位**算（`s[len-1]` 是最低位），进位最多 1，结果位数最多 `max(len_a, len_b) + 1`；注意最高位进位要保留（`9999999999 + 1 = 10000000000`）。
+6. **乘法 `*` / `*=`**：`*=` 是原地修改成员函数（竖式乘法）；`*` 推荐直接调用 `*=`（`BigInt temp = left; temp *= right; return temp;`）。竖式乘法——对 `o` 的每一位（从低到高）乘上 `*this` 的每一位，累加进位到结果数组对应位；结果位数最多 `len_a + len_b`（`99 * 99 = 9801` 是 4 位 = 2+2；`9999999999^2 = 99999999980000000001` 是 20 位 = 10+10）；任何数乘 0 得 0。
+7. **`+=` / `*=` 的返回**：修改自身后返回 `*this` 的引用（`main.C` 里 `(x3 += x4)`、`(y4 *= y5)` 要能直接进 `operator<<`）；`operator+`/`operator*` 返回新对象（`BigInt temp = left; temp += right; return temp;` / `BigInt temp = left; temp *= right; return temp;`）。注意 `a += a`、`a *= a` 这种**别名**情况（自己加/乘自己不能把源数据写坏）。
 8. **比较**：六个比较运算符全部 `const`，用一个私有比较辅助函数统一实现（**先看 `isZero`**：两个都是 0 相等，只有一个是 0 则 0 更小；都不是 0 时位数不同先比位数，同位数再从高位到低位逐字符比——因为高位在前，字典序就是数值序）。
 9. **`operator<<`**：`friend`、不修改对象；`isZero` 为 `true` 时印 `"0"`，否则按 `s[0..len-1]` 顺序印（高位已在外，**不要反转**）。
 10. **禁止**：`std::string`、`to_string`、`vector` 等 STL 容器与字符串设施；`auto`、范围 `for`、`lambda`、`template`、`<bits/stdc++.h>`、`rand`/`srand`/`time`（README 第 3 节）。字符串处理只用 `<cstring>`（`strlen`/`memcpy`/`strcpy`）与手写循环。
@@ -304,6 +316,6 @@ make clean            # 清理，确认没有多余产物
 - **不要**提交 `.o`、`Project7`、`.zip` 里的多余目录（`make` 之后只应该多出 `.o` 与 `Project7`）。
 - `makefile` 里 `CXXFLAGS` 必须包含 `-std=c++20 -O2 -w -Wall`（同 P6）。
 - 限制：每次运行 1 s / 256 MB。
-- **评测方式**：隐藏用例是助教**替换 `main.C` 里的常量**（换成别的 `BigInt` 构造与运算组合）后 `make && ./Project7`，逐字符比对输出；因此**接口签名一个都不能改**（含 `friend operator+(const BigInt& left, const BigInt& right)` 与 `BigInt& operator+=(const BigInt& right)`），改动 = 链接失败 = CE。
+- **评测方式**：隐藏用例是助教**替换 `main.C` 里的常量**（换成别的 `BigInt` 构造与运算组合）后 `make && ./Project7`，逐字符比对输出；因此**接口签名一个都不能改**（`BigInt& operator+=(const BigInt& right)`、`BigInt& operator*=(const BigInt& right)` 必须保留；`operator+`/`operator*` 可以是友元或成员，但**两者形式必须一致**，见「实现提示」），改动 = 链接失败 = CE。
 - 评分：功能 50（固定样例 + 隐藏 `main` 用例）、健壮性 30（R1~R9，重点 R4/R5/R7 内存安全）、规范 20（接口签名、文件划分、`makefile` 质量、可读性、`return 0`）。
 - 自测时先把 `make` 与 `make clean` 各跑一遍，再逐字符比对样例输出，最后务必过一遍 valgrind/ASan。
