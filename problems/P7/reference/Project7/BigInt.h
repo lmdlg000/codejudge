@@ -18,9 +18,9 @@ public:
     BigInt& operator=(const BigInt& o);
     ~BigInt();
 
-    BigInt operator+(const BigInt& o) const;
+    friend BigInt operator+(const BigInt& left, const BigInt& right);
     BigInt operator*(const BigInt& o) const;
-    BigInt& operator+=(const BigInt& o);
+    BigInt& operator+=(const BigInt& right);
     BigInt& operator*=(const BigInt& o);
 
     bool operator==(const BigInt& o) const;

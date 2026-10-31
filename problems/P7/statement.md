@@ -6,7 +6,7 @@
 
 上一版 `BigInt` 只能存、比、印——这一版要**会算**。请实现一个非负大整数类 `BigInt`（位数不受 `int`/`long long` 限制），在原有构造、比较、输出的基础上，支持加法 `+`、`+=`、乘法 `*`、`*=`，并保证全程**无内存泄漏、无 double free、无 use-after-free**。
 
-与课件示例的区别：课件第 7 周的 `BigInt` 只做"存取与比较"，本题**必须实现算术**；与 P5 的 `Rational` 也不同——不是分数四则，而是**任意位数的非负整数**，用 `char*` 逐位手算（禁用 `std::string`/`to_string`）。工程骨架（目录 + `makefile`）与 P6 同款。
+与课件示例的区别：课件第 7 周的 `BigInt` 只做"存取与比较"，本题**必须实现算术**；与 P5 的 `Rational` 也不同——不是分数四则，而是**任意位数的非负整数**，用 `char*` 逐位手算（禁用 `std::string`/`to_string`）。工程骨架（目录 + `makefile`）与 P6 同款。课件要求：**Must store the highest order digit first!!!**（最高位必须存在最前，即 `s[0]` 是最高位）；文件必须放在 `Project7` 目录下。
 
 ## 提交要求（多文件 make 工程）
 
@@ -36,9 +36,9 @@ public:
     BigInt& operator=(const BigInt& o);
     ~BigInt();
 
-    BigInt operator+(const BigInt& o) const;
+    friend BigInt operator+(const BigInt& left, const BigInt& right);
     BigInt operator*(const BigInt& o) const;
-    BigInt& operator+=(const BigInt& o);
+    BigInt& operator+=(const BigInt& right);
     BigInt& operator*=(const BigInt& o);
 
     bool operator==(const BigInt& o) const;
@@ -54,8 +54,29 @@ public:
 
 - 四个私有数据成员的**名字、类型、个数都不得改**；public 接口一个都不能动；
 - `BigInt(size_t v = 0)` 的**默认参数不能去掉**（无参构造 = 0）；
-- 二元 `+`/`*` 不修改任何一方，返回新对象；`+=`/`*=` 修改自身并返回 `*this`（供 `(x3 += x4)` 链式输出）；
+- 二元 `+` 是**友元函数**（不修改任何一方，返回新对象）；`*` 是成员函数（同样不修改任何一方）；`+=`/`*=` 修改自身并返回 `*this`（供 `(x3 += x4)` 链式输出）；
 - 所有比较与 `operator<<` 都是 `const`（或友元）。
+
+**加法实现提示（推荐写法，签名以本节声明为准）**：
+
+`BigInt& operator+=(const BigInt& right)` 的推荐算法（课件 Project7 要求，8 步）：
+
+1. 定义 `BigInt` 指针 `longer` 和 `shorter`；
+2. 如果 `this` 的长度较长，`longer` 设为 `this`、`shorter` 设为 `&right`；否则相反；
+3. 生成一个 `char` 指针 `temp` 指向新的 `char` 数组，长度为 `longer` 的长度 + 1；
+4. 从 `shorter` 的尾部开始向前循环，与 `longer` 对应的数字相加（注意进位），结果存在 `temp` 对应位置；
+5. `longer` 剩下的数字循环（因为前面循环可能有进位数字），结果存在 `temp` 对应位置；
+6. 处理最后一个进位，如果有，存在 `temp` 对应位置，记录最终的长度；
+7. 删除 `this` 的数组，生成一个新数组，把 `temp` 的数字**反向赋值**给这个数组，正确处理 `this` 的 `size` 和 `len`；
+8. 返还 `*this`。
+
+`friend BigInt operator+(const BigInt& left, const BigInt& right)` 的推荐算法（3 步）：
+
+1. `BigInt temp = left;`
+2. `temp += right;`
+3. 返还 `temp`。
+
+> 注意：第 4~5 步必须从**低位（串尾）向高位**算起；第 7 步反向赋值是因为 `temp` 是从低位往高位填充的。课件强调 **Must store the highest order digit first!!!**（最高位必须存在最前），最终 `s[0]` 是最高位。
 
 **`main.C`（题目给定，请原样粘贴，不得修改）**：
 
@@ -113,7 +134,7 @@ clean:
 
 ## 输入格式
 
-**无输入**。`main.C` 里所有数据都是写死的常量；隐藏用例会**替换 `main.C` 里的常量**后重新构建运行（`BigInt` 的接口签名保证替换后仍能链接，改动签名 = CE）。
+**无输入**。`main.C` 里所有数据都是写死的常量；隐藏用例会**替换 `main.C` 里的常量**后重新构建运行（`BigInt` 的接口签名保证替换后仍能链接，改动签名 = CE；`friend operator+` 与 `operator+=` 的签名以「提交要求」声明为准）。
 
 ## 输出格式
 
@@ -155,9 +176,9 @@ clean:
    - `BigInt(const char* str)`：跳过前导 `'0'`；`str` 为 `nullptr` 或全是 `'0'` 或空串 → 规范 0；**遇到非数字字符**：`cerr << "invalid: " << str << endl;` 诊断后**取前缀数字部分**（全非法则为 0）——`stderr` 评测忽略；
    - `BigInt(const BigInt& o)`：**深拷贝**（绝不能让两个对象共用一块缓冲）。
 4. **`operator=`**：自赋值安全（`this == &o` 直接返回）；先分配新的、再 `delete[]` 旧的；返回 `*this`。
-5. **加法 `+`/`+=`**：逐位竖式从低位算起，进位最多 1，结果位数最多 `max(len_a, len_b) + 1`；最高位进位要保留（`9999999999 + 1 = 10000000000`）。
+5. **加法 `+`/`+=`**：`+=` 是原地修改成员函数（算法见上文「加法实现提示」8 步）；`+` 是友元函数，推荐实现为 `BigInt temp = left; temp += right; return temp;`。逐位竖式从低位算起，进位最多 1，结果位数最多 `max(len_a, len_b) + 1`；最高位进位要保留（`9999999999 + 1 = 10000000000`）。
 6. **乘法 `*`/`*=`**：竖式乘法，第 `i` 位乘第 `j` 位累加到结果第 `i+j` 位；结果位数最多 `len_a + len_b`；任何数乘 0 得 0。
-7. **`+=`/`*=` 的返回**：修改自身后返回 `*this` 引用；注意 `a += a`、`a *= a` **别名**情形（不能把源数据写坏）。
+7. **`+=`/`*=` 的返回**：修改自身后返回 `*this` 引用；`friend operator+` 返回新对象（`BigInt temp = left; temp += right; return temp;`）。注意 `a += a`、`a *= a` **别名**情形（不能把源数据写坏）。
 8. **比较**：六个比较运算符全部 `const`，用一个私有比较辅助统一实现（**先看 `isZero`** → 比位数 → 同位数从高位到低位逐字符比；高位在前，字典序即数值序）。
 9. **`operator<<`**：`friend`、不修改对象；`isZero` 为真印 `"0"`，否则按 `s[0..len-1]` 顺序印（**不要反转**）。
 10. **禁止**：`std::string`、`to_string`、`vector` 等 STL 容器与字符串设施；`auto`、范围 `for`、`lambda`、`template`、`<bits/stdc++.h>`、`rand`/`srand`/`time`。字符串处理只用 `<cstring>` 与手写循环。

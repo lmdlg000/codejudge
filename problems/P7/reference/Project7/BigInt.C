@@ -90,24 +90,10 @@ int BigInt::cmp(const BigInt& o) const {
     return std::strcmp(s, o.s);
 }
 
-BigInt BigInt::operator+(const BigInt& o) const {
-    if (isZero) return o;
-    if (o.isZero) return *this;
-    size_t n = (len > o.len ? len : o.len) + 1;
-    char* r = new char[n + 1];
-    r[n] = '\0';
-    size_t i = len, j = o.len, k = n;
-    int carry = 0;
-    while (k > 0) {
-        int sum = carry;
-        if (i > 0) sum += s[--i] - '0';
-        if (j > 0) sum += o.s[--j] - '0';
-        r[--k] = char('0' + sum % 10);
-        carry = sum / 10;
-    }
-    BigInt res(r);
-    delete[] r;
-    return res;
+BigInt operator+(const BigInt& left, const BigInt& right) {
+    BigInt temp = left;
+    temp += right;
+    return temp;
 }
 
 BigInt BigInt::operator*(const BigInt& o) const {
@@ -135,9 +121,76 @@ BigInt BigInt::operator*(const BigInt& o) const {
     return res;
 }
 
-BigInt& BigInt::operator+=(const BigInt& o) {
-    BigInt tmp = *this + o;
-    return *this = tmp;
+BigInt& BigInt::operator+=(const BigInt& right) {
+    // 8-step algorithm (Project7 spec): longer/shorter pointers + temp array + reverse assign.
+    // Alias-safe: if (this == &right), longer==shorter==this; we read before writing.
+    const BigInt* longer;
+    const BigInt* shorter;
+    if (len >= right.len) {
+        longer = this;
+        shorter = &right;
+    } else {
+        longer = &right;
+        shorter = this;
+    }
+    // Handle zero cases: if either is zero, result is the other (already in *this or need copy).
+    if (shorter->isZero) {
+        // *this + 0 = *this (if shorter==this and longer==&right, then *this is 0 and right is nonzero)
+        if (longer != this) {
+            // this is zero, right is nonzero -> *this = right
+            assign(*longer);
+        }
+        return *this;
+    }
+    if (longer->isZero) {
+        // both zero (shorter->isZero handled above) -> nothing to do
+        return *this;
+    }
+
+    // Step 3: temp buffer of length longer->len + 1 (for possible carry)
+    size_t cap = longer->len + 1;
+    char* temp = new char[cap + 1]; // extra for null terminator
+    int carry = 0;
+    size_t ti = cap; // fill from back (low-order end of temp)
+
+    // Step 4: from shorter's tail forward, add to longer's corresponding digit
+    size_t i = longer->len;
+    size_t j = shorter->len;
+    while (j > 0) {
+        --i;
+        --j;
+        int sum = (longer->s[i] - '0') + (shorter->s[j] - '0') + carry;
+        temp[--ti] = char('0' + (sum % 10));
+        carry = sum / 10;
+    }
+    // Step 5: longer's remaining digits (may have carry)
+    while (i > 0) {
+        --i;
+        int sum = (longer->s[i] - '0') + carry;
+        temp[--ti] = char('0' + (sum % 10));
+        carry = sum / 10;
+    }
+    // Step 6: final carry
+    if (carry > 0) {
+        temp[--ti] = char('0' + carry);
+    }
+    size_t finalLen = cap - ti;
+
+    // Step 7: delete this->s, allocate new array, reverse-assign temp into it
+    char* ns = new char[finalLen + 1];
+    for (size_t k = 0; k < finalLen; k++) {
+        ns[k] = temp[ti + k];
+    }
+    ns[finalLen] = '\0';
+    delete[] s;
+    s = ns;
+    len = finalLen;
+    size = finalLen + 1;
+    isZero = false;
+    delete[] temp;
+
+    // Step 8: return *this
+    return *this;
 }
 
 BigInt& BigInt::operator*=(const BigInt& o) {
