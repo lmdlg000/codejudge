@@ -82,19 +82,18 @@ function rowScore(it) {
   return null
 }
 
-/** 统计行：共 {total} 次评测 + 满分率 + 通过率 */
+/** 统计行：共 {total} 次评测 + 平均分 + 代码质量评级 */
 const statsText = computed(() => {
-  const list = visibleItems.value.filter((it) => rowScore(it) != null)
+  const scores = visibleItems.value.map(rowScore).filter((s) => s != null)
   const base = activeTab.value === 'cloud' ? cloudTotal.value : total.value
-  const perfect = list.filter((it) => rowScore(it) >= 100).length
-  const passed = list.filter((it) => rowScore(it) > 0).length
-  const perfectRate = list.length ? formatPercent(perfect / list.length) : '0'
-  const passRate = list.length ? formatPercent(passed / list.length) : '0'
-  return `共 ${formatNum(base)} 次评测 · 满分率 ${perfectRate}% · 通过率 ${passRate}%`
+  if (!scores.length) return `共 ${formatNum(base)} 次评测 · 暂无评分`
+  const avg = Math.round(scores.reduce((a, b) => a + b, 0) / scores.length)
+  const grade = avg >= 90 ? 'A' : avg >= 80 ? 'B' : avg >= 70 ? 'C' : avg >= 60 ? 'D' : 'F'
+  return `共 ${formatNum(base)} 次评测 · 平均分 ${avg}/100 · 质量评级 ${grade}`
 })
 
 const statsTip =
-  '满分率 = 得分 100/100 的提交占比；通过率 = 得分 > 0 的提交占比（无分数的提交不计入）'
+  '平均分 = 有分数提交的得分均值；质量评级：A ≥ 90，B ≥ 80，C ≥ 70，D ≥ 60，F < 60。提交须先通过样例，故低分提交通常不会出现。'
 
 const canLoadMore = computed(() => {
   const len = activeTab.value === 'cloud' ? cloudItems.value.length : items.value.length
