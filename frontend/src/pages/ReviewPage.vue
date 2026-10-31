@@ -347,6 +347,8 @@ onMounted(init)
   margin: 0;
   color: var(--text-secondary);
   white-space: pre-wrap;
+  font-variant-ligatures: none;
+  font-feature-settings: "liga" 0, "calt" 0;
 }
 
 .review-card__run {

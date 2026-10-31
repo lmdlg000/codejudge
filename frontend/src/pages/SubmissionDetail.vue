@@ -665,6 +665,8 @@ function copyStderr() {
   margin: var(--space-3) 0 0;
   color: var(--text-secondary);
   white-space: pre-wrap;
+  font-variant-ligatures: none;
+  font-feature-settings: "liga" 0, "calt" 0;
 }
 
 /* ΔUAPI 真实运行数据表 */
