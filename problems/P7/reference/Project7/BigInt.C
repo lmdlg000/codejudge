@@ -2,7 +2,7 @@
 #include <cstring>
 
 // 存储不变式（全题遵守）：
-//   isZero == true  ⇔ 值为 0，此时 len == 0、s[0] == '\0'、size >= 1；
+//   isZero == true ⇔ 值为 0；0 的表示两种都合法：len==0/s="" 或 len==1/s="0"（课件风格）；
 //   isZero == false ⇒ len >= 1、s[0] != '0'（无前导零）、s[len] == '\0'、size >= len + 1；
 //   s[0] 最高位、s[len-1] 最低位（高位在前）。
 

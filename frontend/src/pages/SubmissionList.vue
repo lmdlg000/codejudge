@@ -75,19 +75,26 @@ const visibleItems = computed(() => {
 
 const hasFilter = computed(() => !!(filterProblem.value || filterVerdict.value))
 
-/** 判定行是否算 AC：同步 verdict=AC 或 异步 human_reviewed_pass */
-function isAc(it) {
-  return it.verdict === 'AC' || it.async_status === 'human_reviewed_pass'
+/** 行得分（异步取 ai_score/summary.score，同步取 summary.score） */
+function rowScore(it) {
+  if (it.summary && it.summary.score != null) return Number(it.summary.score)
+  if (it.ai_score != null) return Number(it.ai_score)
+  return null
 }
 
-/** 统计行：共 {total} 次评测（total 为过滤后总数，直接绑定）+ AC 次数与通过率 */
+/** 统计行：共 {total} 次评测 + 满分率 + 通过率 */
 const statsText = computed(() => {
-  const list = visibleItems.value
+  const list = visibleItems.value.filter((it) => rowScore(it) != null)
   const base = activeTab.value === 'cloud' ? cloudTotal.value : total.value
-  const acCount = list.filter(isAc).length
-  const rate = list.length ? formatPercent(acCount / list.length) : '0'
-  return `共 ${formatNum(base)} 次评测 · AC ${acCount} 次 · 通过率 ${rate}%`
+  const perfect = list.filter((it) => rowScore(it) >= 100).length
+  const passed = list.filter((it) => rowScore(it) > 0).length
+  const perfectRate = list.length ? formatPercent(perfect / list.length) : '0'
+  const passRate = list.length ? formatPercent(passed / list.length) : '0'
+  return `共 ${formatNum(base)} 次评测 · 满分率 ${perfectRate}% · 通过率 ${passRate}%`
 })
+
+const statsTip =
+  '满分率 = 得分 100/100 的提交占比；通过率 = 得分 > 0 的提交占比（无分数的提交不计入）'
 
 const canLoadMore = computed(() => {
   const len = activeTab.value === 'cloud' ? cloudItems.value.length : items.value.length
@@ -301,7 +308,7 @@ watch(
             </select>
           </label>
         </div>
-        <p class="filter__stats caption">
+        <p class="filter__stats caption" :title="statsTip">
           <span class="mono-data">{{ statsText }}</span>
         </p>
       </section>
