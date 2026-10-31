@@ -26,6 +26,15 @@ import { TDK_HISTORY, applyTdk } from '../utils/tdk.js'
 import { formatNum, formatPercent } from '../utils/format.js'
 import { VERDICTS } from '../utils/verdicts.js'
 
+/** 异步 AI 流状态（供筛选下拉） */
+const ASYNC_STATUSES = [
+  { value: 'human_reviewed_pass', label: '复核通过' },
+  { value: 'human_reviewed_fail', label: '复核不通过' },
+  { value: 'ai_scored', label: 'AI 初评' },
+  { value: 'pending_review', label: '待人工确认' },
+  { value: 'judging', label: '评分中' }
+]
+
 const route = useRoute()
 const router = useRouter()
 
@@ -59,16 +68,23 @@ const cloudLoaded = ref(false)
 const visibleItems = computed(() => {
   const list = activeTab.value === 'cloud' ? cloudItems.value : items.value
   if (!filterVerdict.value) return list
-  return list.filter((it) => it.verdict === filterVerdict.value)
+  return list.filter(
+    (it) => it.verdict === filterVerdict.value || it.async_status === filterVerdict.value
+  )
 })
 
 const hasFilter = computed(() => !!(filterProblem.value || filterVerdict.value))
+
+/** 判定行是否算 AC：同步 verdict=AC 或 异步 human_reviewed_pass */
+function isAc(it) {
+  return it.verdict === 'AC' || it.async_status === 'human_reviewed_pass'
+}
 
 /** 统计行：共 {total} 次评测（total 为过滤后总数，直接绑定）+ AC 次数与通过率 */
 const statsText = computed(() => {
   const list = visibleItems.value
   const base = activeTab.value === 'cloud' ? cloudTotal.value : total.value
-  const acCount = list.filter((it) => it.verdict === 'AC').length
+  const acCount = list.filter(isAc).length
   const rate = list.length ? formatPercent(acCount / list.length) : '0'
   return `共 ${formatNum(base)} 次评测 · AC ${acCount} 次 · 通过率 ${rate}%`
 })
@@ -276,7 +292,12 @@ watch(
             <span class="filter__label">判定</span>
             <select v-model="filterVerdict" class="filter__select" @change="onFilterChange">
               <option value="">全部</option>
-              <option v-for="v in VERDICTS" :key="v" :value="v">{{ v }}</option>
+              <optgroup label="同步判定">
+                <option v-for="v in VERDICTS" :key="v" :value="v">{{ v }}</option>
+              </optgroup>
+              <optgroup label="AI 异步流">
+                <option v-for="s in ASYNC_STATUSES" :key="s.value" :value="s.value">{{ s.label }}</option>
+              </optgroup>
             </select>
           </label>
         </div>
