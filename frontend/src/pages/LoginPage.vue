@@ -16,6 +16,7 @@ import {
   authMode,
   effectiveAuthMode,
   isLoggedIn,
+  ready as authReady,
   signInWithPassword,
   signUp,
   signInWithGitHub,
@@ -176,8 +177,10 @@ onMounted(() => {
   if (isLoggedIn.value) router.replace('/')
 })
 
-watch(isLoggedIn, (v) => {
-  if (v) router.replace('/')
+// auth 就绪后若已登录（刷新恢复会话），离开登录页；
+// 不 watch isLoggedIn —— 真正登录的跳转由 useAuth SIGNED_IN 统一处理（带 rememberRedirect 回跳）
+watch(authReady, (r) => {
+  if (r && isLoggedIn.value) router.replace('/')
 })
 </script>
 

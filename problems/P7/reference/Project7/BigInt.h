@@ -19,7 +19,7 @@ public:
     ~BigInt();
 
     friend BigInt operator+(const BigInt& left, const BigInt& right);
-    BigInt operator*(const BigInt& o) const;
+    friend BigInt operator*(const BigInt& left, const BigInt& right);
     BigInt& operator+=(const BigInt& right);
     BigInt& operator*=(const BigInt& o);
 

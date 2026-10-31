@@ -96,29 +96,10 @@ BigInt operator+(const BigInt& left, const BigInt& right) {
     return temp;
 }
 
-BigInt BigInt::operator*(const BigInt& o) const {
-    if (isZero || o.isZero) return BigInt(size_t(0));
-    size_t n = len + o.len;
-    int* acc = new int[n]();
-    for (size_t i = 0; i < len; i++) {
-        int a = s[len - 1 - i] - '0';
-        for (size_t j = 0; j < o.len; j++) {
-            acc[i + j] += a * (o.s[o.len - 1 - j] - '0');
-        }
-    }
-    int carry = 0;
-    for (size_t k = 0; k < n; k++) {
-        acc[k] += carry;
-        carry = acc[k] / 10;
-        acc[k] %= 10;
-    }
-    char* r = new char[n + 1];
-    for (size_t k = 0; k < n; k++) r[k] = char('0' + acc[n - 1 - k]);
-    r[n] = '\0';
-    delete[] acc;
-    BigInt res(r);
-    delete[] r;
-    return res;
+BigInt operator*(const BigInt& left, const BigInt& right) {
+    BigInt temp = left;
+    temp *= right;
+    return temp;
 }
 
 BigInt& BigInt::operator+=(const BigInt& right) {
@@ -194,8 +175,43 @@ BigInt& BigInt::operator+=(const BigInt& right) {
 }
 
 BigInt& BigInt::operator*=(const BigInt& o) {
-    BigInt tmp = *this * o;
-    return *this = tmp;
+    if (isZero || o.isZero) {
+        // 结果为 0
+        delete[] s;
+        size = 1;
+        s = new char[1];
+        s[0] = '\0';
+        len = 0;
+        isZero = true;
+        return *this;
+    }
+    size_t n = len + o.len;
+    int* acc = new int[n]();
+    for (size_t i = 0; i < len; i++) {
+        int a = s[len - 1 - i] - '0';
+        for (size_t j = 0; j < o.len; j++) {
+            acc[i + j] += a * (o.s[o.len - 1 - j] - '0');
+        }
+    }
+    int carry = 0;
+    for (size_t k = 0; k < n; k++) {
+        acc[k] += carry;
+        carry = acc[k] / 10;
+        acc[k] %= 10;
+    }
+    // 去除前导零（acc[n-1] 是最高位）
+    size_t finalLen = n;
+    while (finalLen > 1 && acc[finalLen - 1] == 0) --finalLen;
+    char* r = new char[finalLen + 1];
+    for (size_t k = 0; k < finalLen; k++) r[k] = char('0' + acc[finalLen - 1 - k]);
+    r[finalLen] = '\0';
+    delete[] acc;
+    delete[] s;
+    s = r;
+    len = finalLen;
+    size = finalLen + 1;
+    isZero = false;
+    return *this;
 }
 
 bool BigInt::operator==(const BigInt& o) const { return cmp(o) == 0; }

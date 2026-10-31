@@ -9,7 +9,7 @@ import { getHealth } from '../api/client.js'
 
 const session = ref(null)
 const user = ref(null)
-const ready = ref(false)
+export const ready = ref(false)
 
 /**
  * 两端不一致降级（13.4）：env 已配但后端 health.supabase_configured=false
@@ -19,6 +19,7 @@ const modeDegraded = ref(false)
 
 let inited = false
 let hadSession = false
+let sessionReady = false // getSession 已解析（区分会话恢复 vs 真正登录）
 let listeners = []
 let toastFn = null
 
@@ -121,9 +122,9 @@ function consumeRedirect() {
   try {
     const v = sessionStorage.getItem(LOGIN_REDIRECT_KEY)
     sessionStorage.removeItem(LOGIN_REDIRECT_KEY)
-    return v || '/'
+    return v // null = 无记录
   } catch {
-    return '/'
+    return null
   }
 }
 
@@ -168,17 +169,33 @@ export function initAuth(deps = {}) {
   }
 
   // 启动恢复登录态 + 坏会话自检（防 autoRefresh 无限 401）
-  supabase.auth.getSession().then(({ data }) => {
-    session.value = data && data.session ? data.session : null
-    user.value = session.value ? session.value.user : null
-    hadSession = !!session.value
-    ready.value = true
-    validateSession()
-  })
+  supabase.auth
+    .getSession()
+    .then(({ data }) => {
+      session.value = data && data.session ? data.session : null
+      user.value = session.value ? session.value.user : null
+      hadSession = !!session.value
+      ready.value = true
+      sessionReady = true
+      validateSession()
+    })
+    .catch(() => {
+      ready.value = true
+      sessionReady = true
+    })
 
   supabase.auth.onAuthStateChange((event, s) => {
     session.value = s || null
     user.value = s ? s.user : null
+
+    // 会话恢复（页面刷新/初始化）：只更新状态，不跳转
+    if (event === 'INITIAL_SESSION') {
+      hadSession = !!s
+      sessionReady = true
+      ready.value = true
+      emitAuth(event, s)
+      return
+    }
 
     if (event === 'TOKEN_REFRESH_FAILED') {
       // 换票失败 ≠ 会话无效（网络抖动/限流也会触发）：先验证，确认失效才清
@@ -201,9 +218,12 @@ export function initAuth(deps = {}) {
       // 仅在「无会话 → 有会话」时弹 toast 并回跳（避免刷新/换票重复弹）
       if (!hadSession) {
         hadSession = true
-        if (deps.toast) deps.toast('登录成功。可以提交判题了。')
-        const target = consumeRedirect()
-        if (deps.router) deps.router.replace(target)
+        // 只在真正登录（非会话恢复）时跳转；sessionReady 确保 getSession 已解析
+        if (sessionReady) {
+          if (deps.toast) deps.toast('登录成功。可以提交判题了。')
+          const target = consumeRedirect()
+          if (deps.router) deps.router.replace(target || '/')
+        }
       }
     } else if (event === 'SIGNED_OUT') {
       hadSession = false

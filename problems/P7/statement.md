@@ -37,7 +37,7 @@ public:
     ~BigInt();
 
     friend BigInt operator+(const BigInt& left, const BigInt& right);
-    BigInt operator*(const BigInt& o) const;
+    friend BigInt operator*(const BigInt& left, const BigInt& right);
     BigInt& operator+=(const BigInt& right);
     BigInt& operator*=(const BigInt& o);
 
@@ -61,7 +61,7 @@ public:
 
 **推荐实现顺序**：先把 `+=` 做出来，`+` 直接调用 `+=`（见下）；同理再把 `*=` 做出来，`*` 直接调用 `*=`。这样 `+`/`*` 都不用重复实现竖式逻辑。
 
-**形式一致性（硬性要求）**：`+` 和 `*` 要么**都是友元函数**，要么**都是成员函数**，不能一个友元一个成员。上文类声明给出的是推荐形式（`+` 为友元、`*` 为成员）；若你两个都改成成员函数（`BigInt operator+(const BigInt& right) const;` + `BigInt operator*(const BigInt& right) const;`），只要**两者形式一致**且功能正确，同样算对。
+**形式一致性（硬性要求）**：`+` 和 `*` 要么**都是友元函数**，要么**都是成员函数**，不能一个友元一个成员。上文类声明给出的是推荐形式（两者均为友元）；若你两个都改成成员函数（`BigInt operator+(const BigInt& right) const;` + `BigInt operator*(const BigInt& right) const;`），只要**两者形式一致**且功能正确，同样算对。
 
 `BigInt& operator+=(const BigInt& right)` 的推荐算法（课件 Project7 要求，8 步）：
 
