@@ -144,23 +144,33 @@ export async function gradeInBackground(opts: {
     const priority = reason === "ai_failed" || reason === "force_submit" || (ai != null && ai.score < 40)
       ? "high"
       : "medium";
-    await admin.from("human_review_queue").insert({
+    const { error: insErr } = await admin.from("human_review_queue").insert({
       submission_id: sid,
       reason,
       priority,
       ai_score: ai ? ai.score : null,
       ai_feedback: ai ? ai.feedback : null,
     });
-    await admin.from("submissions").update({
+    if (insErr) {
+      console.error("[gradeInBackground] human_review_queue insert failed:", sid, insErr.message, insErr);
+      throw new Error(`hrq insert: ${insErr.message}`);
+    }
+    const { error: updErr } = await admin.from("submissions").update({
       status: "pending_review",
       score: ai ? ai.score : null,
       ai_feedback: ai ? ai.feedback : null,
       scored_at: new Date().toISOString(),
     }).eq("id", sid);
+    if (updErr) {
+      console.error("[gradeInBackground] submissions update failed:", sid, updErr.message, updErr);
+      throw new Error(`sub update: ${updErr.message}`);
+    }
+    console.log("[gradeInBackground] toHumanReview OK:", sid, reason);
   }
 
   try {
     const ai = await callAi(sub, problemId, run);
+    console.log("[gradeInBackground] callAi result:", sid, ai ? `score=${ai.score} conclusive=${ai.conclusive}` : "null");
     // 备用通道（样例未全过强制提交）：AI 只出参考分，最终以人工裁决为准
     if (forceReview) {
       await toHumanReview(ai, "force_submit");
@@ -170,21 +180,27 @@ export async function gradeInBackground(opts: {
     const inconclusive = ai == null || !ai.conclusive;
 
     if (ai != null && !inconclusive && !lowScore) {
-      await admin.from("submissions").update({
+      const { error: updErr } = await admin.from("submissions").update({
         status: "ai_scored",
         score: ai.score,
         ai_feedback: ai.feedback,
         scored_at: new Date().toISOString(),
       }).eq("id", sid);
+      if (updErr) {
+        console.error("[gradeInBackground] ai_scored update failed:", sid, updErr.message, updErr);
+        throw new Error(`ai_scored update: ${updErr.message}`);
+      }
+      console.log("[gradeInBackground] ai_scored OK:", sid, ai.score);
       return;
     }
     const reason = ai == null ? "ai_failed" : lowScore ? "low_score" : "inconclusive";
     await toHumanReview(ai, reason);
-  } catch {
+  } catch (e) {
+    console.error("[gradeInBackground] primary path failed:", sid, e);
     try {
       await toHumanReview(null, "ai_failed");
-    } catch {
-      /* 队列写入也失败：行留在 judging，用户可重试提交 */
+    } catch (e2) {
+      console.error("[gradeInBackground] fallback toHumanReview also failed:", sid, e2);
     }
   }
 }
