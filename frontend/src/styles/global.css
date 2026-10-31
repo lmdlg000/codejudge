@@ -86,6 +86,20 @@ button {
 
 code, pre, kbd, samp {
   font-family: var(--font-mono);
+  /* JetBrains Mono 等默认开运算符连字（==、!=、<=、>=、-> 会并成一格），
+     判题站要逐字符读源码，代码/等宽一律关连字。 */
+  font-variant-ligatures: none;
+  font-feature-settings: "liga" 0, "calt" 0;
+}
+
+textarea,
+input {
+  font-family: inherit;
+}
+
+textarea {
+  font-variant-ligatures: none;
+  font-feature-settings: "liga" 0, "calt" 0;
 }
 
 /* —— 焦点可见（硬性，禁止 outline:none）—— */
@@ -149,6 +163,8 @@ code, pre, kbd, samp {
   border-radius: var(--radius-sm);
   padding: 1px 6px;
   color: var(--text-primary);
+  font-variant-ligatures: none;
+  font-feature-settings: "liga" 0, "calt" 0;
 }
 
 /* —— 等宽数据 —— */
@@ -157,12 +173,26 @@ code, pre, kbd, samp {
   font-size: var(--text-mono-data);
   font-weight: 500;
   font-variant-numeric: tabular-nums;
+  font-variant-ligatures: none;
+  font-feature-settings: "liga" 0, "calt" 0;
+}
+
+/* 全站等宽族兜底：JetBrains Mono 的运算符连字（==、!=、<=、>=、->）
+   会把两字符并成一格，判题站要逐字符读源码，统一关闭。 */
+[class*="mono-"],
+[class*="code-"],
+.editor__area,
+.mfile__area {
+  font-variant-ligatures: none;
+  font-feature-settings: "liga" 0, "calt" 0;
 }
 
 .mono-code {
   font-family: var(--font-mono);
   font-size: var(--text-mono-code);
   line-height: var(--lh-mono-code);
+  font-variant-ligatures: none;
+  font-feature-settings: "liga" 0, "calt" 0;
 }
 
 .caption {

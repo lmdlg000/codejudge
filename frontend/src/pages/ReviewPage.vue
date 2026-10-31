@@ -412,6 +412,8 @@ onMounted(init)
   font-family: var(--font-mono);
   font-size: var(--text-mono-code);
   resize: vertical;
+  font-variant-ligatures: none;
+  font-feature-settings: "liga" 0, "calt" 0;
 }
 
 /* 管理员自助提权 */
@@ -436,6 +438,8 @@ onMounted(init)
   font-size: var(--text-mono-code);
   overflow-x: auto;
   user-select: all;
+  font-variant-ligatures: none;
+  font-feature-settings: "liga" 0, "calt" 0;
 }
 
 .admin-setup__warn {

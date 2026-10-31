@@ -357,5 +357,7 @@ function fileSize(content) {
   font-size: var(--text-mono-code);
   line-height: var(--lh-mono-code);
   outline: none;
+  font-variant-ligatures: none;
+  font-feature-settings: "liga" 0, "calt" 0;
 }
 </style>

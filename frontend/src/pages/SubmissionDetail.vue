@@ -599,6 +599,8 @@ function copyStderr() {
   overflow: auto;
   white-space: pre-wrap;
   word-break: break-all;
+  font-variant-ligatures: none;
+  font-feature-settings: "liga" 0, "calt" 0;
 }
 
 .fail-actions {

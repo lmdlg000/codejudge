@@ -154,6 +154,8 @@ const hasErrorLine = computed(() => firstErrorIdx.value >= 0)
   padding: 0 var(--space-4);
   white-space: pre-wrap;
   word-break: break-all;
+  font-variant-ligatures: none;
+  font-feature-settings: "liga" 0, "calt" 0;
 }
 
 .blog__line--error {

@@ -1,6 +1,6 @@
 /**
  * 语法高亮 token 配色 —— 沿用终端色板（tokens.css 的 --code-* 语义变量）。
- * 作用域限定在题面 (.md-body) 与代码块 (.code-block) 内，不影响其他区域。
+ * 作用域：题面 (.md-body) / 代码块 (.code-block) / 源码回显 (.src__code)。
  */
 
 .md-body .hljs-keyword,
@@ -12,7 +12,12 @@
 .code-block .hljs-selector-tag,
 .code-block .hljs-literal,
 .code-block .hljs-section,
-.code-block .hljs-doctag {
+.code-block .hljs-doctag,
+.src__code .hljs-keyword,
+.src__code .hljs-selector-tag,
+.src__code .hljs-literal,
+.src__code .hljs-section,
+.src__code .hljs-doctag {
   color: #c792ea; /* 紫：关键字/控制流（同 --verdict-ce-text） */
 }
 
@@ -23,7 +28,11 @@
 .code-block .hljs-type,
 .code-block .hljs-built_in,
 .code-block .hljs-class .hljs-title,
-.code-block .hljs-title.class_ {
+.code-block .hljs-title.class_,
+.src__code .hljs-type,
+.src__code .hljs-built_in,
+.src__code .hljs-class .hljs-title,
+.src__code .hljs-title.class_ {
   color: var(--info-text); /* 青：类型/内建 */
 }
 
@@ -32,7 +41,10 @@
 .md-body .hljs-name,
 .code-block .hljs-title,
 .code-block .hljs-title.function_,
-.code-block .hljs-name {
+.code-block .hljs-name,
+.src__code .hljs-title,
+.src__code .hljs-title.function_,
+.src__code .hljs-name {
   color: var(--primary); /* 绿：函数/类名 */
 }
 
@@ -41,7 +53,10 @@
 .md-body .hljs-addition,
 .code-block .hljs-string,
 .code-block .hljs-regexp,
-.code-block .hljs-addition {
+.code-block .hljs-addition,
+.src__code .hljs-string,
+.src__code .hljs-regexp,
+.src__code .hljs-addition {
   color: var(--code-string);
 }
 
@@ -50,7 +65,10 @@
 .md-body .hljs-bullet,
 .code-block .hljs-number,
 .code-block .hljs-symbol,
-.code-block .hljs-bullet {
+.code-block .hljs-bullet,
+.src__code .hljs-number,
+.src__code .hljs-symbol,
+.src__code .hljs-bullet {
   color: var(--code-number);
 }
 
@@ -59,7 +77,10 @@
 .md-body .hljs-meta,
 .code-block .hljs-comment,
 .code-block .hljs-quote,
-.code-block .hljs-meta {
+.code-block .hljs-meta,
+.src__code .hljs-comment,
+.src__code .hljs-quote,
+.src__code .hljs-meta {
   color: var(--code-comment);
   font-style: italic;
 }
@@ -73,21 +94,29 @@
 .code-block .hljs-attribute,
 .code-block .hljs-variable,
 .code-block .hljs-template-variable,
-.code-block .hljs-params {
+.code-block .hljs-params,
+.src__code .hljs-attr,
+.src__code .hljs-attribute,
+.src__code .hljs-variable,
+.src__code .hljs-template-variable,
+.src__code .hljs-params {
   color: var(--code-text);
 }
 
 .md-body .hljs-deletion,
-.code-block .hljs-deletion {
+.code-block .hljs-deletion,
+.src__code .hljs-deletion {
   color: var(--danger-text);
 }
 
 .md-body .hljs-emphasis,
-.code-block .hljs-emphasis {
+.code-block .hljs-emphasis,
+.src__code .hljs-emphasis {
   font-style: italic;
 }
 
 .md-body .hljs-strong,
-.code-block .hljs-strong {
+.code-block .hljs-strong,
+.src__code .hljs-strong {
   font-weight: 700;
 }

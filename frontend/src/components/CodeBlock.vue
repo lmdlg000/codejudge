@@ -103,5 +103,7 @@ async function copy() {
   line-height: var(--lh-mono-code);
   overflow-x: auto;
   white-space: pre;
+  font-variant-ligatures: none;
+  font-feature-settings: "liga" 0, "calt" 0;
 }
 </style>

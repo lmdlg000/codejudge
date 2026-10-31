@@ -2,6 +2,8 @@
 /* 设计语言：CRT 终端 —— 全站等宽、荧光绿主色、琥珀强调、ANSI 判定七色、直角 */
 :root {
   /* —— 字族（全站等宽 = 终端第一信号）—— */
+  /* 运算符连字（== != <= >= -> => :: && ||）会把两字符并成一格，
+     代码里容易看成“粘在一起”，代码/等宽一律显式关闭（font-variant-ligatures: none）。 */
   --font-sans: "JetBrains Mono", "Cascadia Code", "SF Mono", Consolas,
                "Cascadia Mono", Menlo, "Noto Sans Mono", "Microsoft YaHei Mono", monospace;
   --font-mono: "JetBrains Mono", "Cascadia Code", "SF Mono", Consolas,

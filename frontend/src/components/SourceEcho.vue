@@ -2,8 +2,10 @@
 /**
  * 提交源码回显（design-spec 5.12 源码回显）。
  * 默认折叠；按钮「展开源码 / 收起源码」；每文件一节：文件名 + 等宽代码块 + 复制。
+ * 按文件名推断语言做语法高亮（cpp/makefile/bash…）；未知扩展回退纯文本。
  */
 import { ref, computed } from 'vue'
+import { highlightCode, langFromFilename } from '../utils/hljs.js'
 
 const props = defineProps({
   files: { type: Array, default: () => [] }
@@ -14,6 +16,19 @@ const uid = `src-echo-${Math.random().toString(36).slice(2, 9)}`
 const copiedName = ref('')
 
 const count = computed(() => (props.files || []).length)
+
+/** 每文件：推断语言 → token HTML（'' = 纯文本回退） */
+const rendered = computed(() =>
+  (props.files || []).map((f) => {
+    const content = f && f.content != null ? String(f.content) : ''
+    const lang = langFromFilename(f && f.name)
+    return {
+      name: (f && f.name) || '',
+      content,
+      html: lang ? highlightCode(content, lang) : ''
+    }
+  })
+)
 
 async function copyFile(f) {
   try {
@@ -57,14 +72,15 @@ async function copyFile(f) {
     </button>
 
     <div v-show="open" :id="uid" class="src__body">
-      <div v-for="f in files" :key="f.name" class="src__file">
+      <div v-for="f in rendered" :key="f.name" class="src__file">
         <div class="src__file-bar">
           <span class="mono-data src__filename">{{ f.name }}</span>
           <button type="button" class="src__copy" @click="copyFile(f)">
             {{ copiedName === f.name ? '已复制' : '复制' }}
           </button>
         </div>
-        <pre class="src__code"><code>{{ f.content }}</code></pre>
+        <!-- eslint-disable-next-line vue/no-v-html —— highlightCode 输出可信 token span -->
+        <pre class="src__code"><code v-if="f.html" class="hljs" v-html="f.html"></code><code v-else>{{ f.content }}</code></pre>
       </div>
     </div>
   </section>
@@ -176,5 +192,7 @@ async function copyFile(f) {
   max-height: 320px;
   overflow: auto;
   white-space: pre;
+  font-variant-ligatures: none;
+  font-feature-settings: "liga" 0, "calt" 0;
 }
 </style>
