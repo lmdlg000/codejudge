@@ -30,6 +30,7 @@ import {
 } from '../composables/useAuth.js'
 import { problemTdk, applyTdk } from '../utils/tdk.js'
 import { modeShort } from '../utils/format.js'
+import { loadDraft, saveDraft } from '../utils/draft.js'
 
 const route = useRoute()
 const router = useRouter()
@@ -47,6 +48,41 @@ int main() {
 `
 const code = ref(SKELETON)
 const filename = ref('main.cpp')
+
+/**
+ * 草稿防抖落盘（localStorage，30 天 TTL）：编辑即存，刷新/误关页面后恢复。
+ * 选型说明：localStorage 属「纯功能存储」（仅本机保存编辑内容，不做跟踪），
+ * 与站点既有用法一致（App.vue 提示条关闭态），不引入 Cookie 同意弹窗。
+ */
+let draftTimer = null
+function persistDraft() {
+  if (draftTimer) clearTimeout(draftTimer)
+  draftTimer = setTimeout(() => {
+    draftTimer = null
+    saveDraft(pid.value, {
+      mode: submitMode.value,
+      code: code.value,
+      files: multiFiles.value,
+      skeleton: SKELETON
+    })
+  }, 400)
+}
+
+/** 从持久化草稿恢复（init 与换题共用） */
+function restoreDraft() {
+  const saved = loadDraft(pid.value)
+  if (!saved) return false
+  let restored = false
+  if (saved.mode === 'multi' && Array.isArray(saved.files) && saved.files.length) {
+    submitMode.value = 'multi'
+    multiFiles.value = saved.files
+    restored = true
+  } else if (typeof saved.code === 'string' && saved.code && !isMake.value) {
+    code.value = saved.code
+    restored = true
+  }
+  return restored
+}
 
 /** 提交形态：single 单文件（原有能力）| multi 多文件上传（新增，make 题强制） */
 const submitMode = ref('single')
@@ -208,7 +244,14 @@ function resolveFilename() {
 
 function onUpload(text) {
   code.value = text
+  persistDraft()
 }
+
+  // 编辑即存（防抖）：单文件码 / 多文件表单 / 提交形态切换均落草稿。
+  // flush: 'post' 让「换题前清空」先执行，避免旧题草稿把新题覆盖成骨架
+watch(code, persistDraft, { flush: 'post' })
+watch(multiFiles, persistDraft, { deep: true, flush: 'post' })
+watch(submitMode, persistDraft, { flush: 'post' })
 
 function fillExample() {
   const item = examples.value.find((e) => e.name === selectedExample.value)
@@ -305,7 +348,8 @@ async function submit(force = false) {
   // supabase 模式「登录后判题」前置拦截（13.5：服务端 401 仅兜底）
   if (effectiveAuthMode.value && !isLoggedIn.value) {
     loginRequired.value = true
-    // 保留编辑器内容：先落 sessionStorage，回跳后 init() 自动恢复
+    // 保留编辑器内容：立即落草稿（localStorage）+ sessionStorage，回跳后 init() 自动恢复
+    persistDraft()
     try {
       sessionStorage.setItem(
         `codejudge-submit-${pid.value}`,
@@ -420,16 +464,18 @@ async function init() {
     filename.value = resolveFilename()
     // make 题强制多文件；g++ 题默认单文件
     submitMode.value = isMake.value ? 'multi' : 'single'
-    // 恢复上次源码（结果页「返回题目改代码」）
+    // 恢复上次源码（编辑草稿 localStorage / 提交暂存 sessionStorage，后者兼容旧路径）。
+    // 内部赋值会触发草稿 watcher，但 400ms 防抖后写回的是刚恢复的同一内容，无副作用。
     try {
-      const saved = sessionStorage.getItem(`codejudge-submit-${pid.value}`)
+      const draft = loadDraft(pid.value)
+      const legacy = sessionStorage.getItem(`codejudge-submit-${pid.value}`)
+      const saved = draft || (legacy ? JSON.parse(legacy) : null)
       if (saved) {
-        const prev = JSON.parse(saved)
-        if (prev.mode === 'multi' && Array.isArray(prev.files) && prev.files.length) {
+        if (saved.mode === 'multi' && Array.isArray(saved.files) && saved.files.length) {
           submitMode.value = 'multi'
-          multiFiles.value = prev.files
-        } else if (typeof prev.code === 'string' && prev.code && !isMake.value) {
-          code.value = prev.code
+          multiFiles.value = saved.files
+        } else if (typeof saved.code === 'string' && saved.code && !isMake.value) {
+          code.value = saved.code
         }
       }
     } catch {
@@ -440,8 +486,8 @@ async function init() {
 }
 
 onMounted(init)
-watch(() => route.params.pid, () => {
-  if (route.name === 'problem-detail') {
+watch(() => route.params.pid, (nv, ov) => {
+  if (route.name === 'problem-detail' && nv && nv !== ov) {
     code.value = SKELETON
     multiFiles.value = []
     submitMode.value = 'single'

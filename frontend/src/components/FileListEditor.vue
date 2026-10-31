@@ -3,8 +3,10 @@
  * 多文件提交面板 —— 「多个源代码上传提交评测」核心 UI。
  * 能力：多选上传 / 新建空文件 / 选中编辑 / 删除；文件名白名单与后端一致
  * （字母数字 _ . -，1–64 字符）；内容以文本读入（源码提交）。
+ * 编辑区为 overlay 高亮：透明字色 textarea + 背景 pre（按文件名推断语言）。
  */
-import { computed, ref } from 'vue'
+import { computed, ref, onBeforeUnmount } from 'vue'
+import { highlightCode, langFromFilename } from '../utils/hljs.js'
 
 const props = defineProps({
   /** @type {{name:string, content:string}[]} */
@@ -28,6 +30,48 @@ const files = computed({
 })
 
 const activeFile = computed(() => files.value.find((f) => f.name === activeName.value) || null)
+
+/** 高亮层 HTML：按当前文件名推断语言；未知语言回退纯文本转义 */
+const highlighted = computed(() => {
+  const f = activeFile.value
+  if (!f) return ''
+  const lang = langFromFilename(f.name)
+  return highlightCode(f.content, lang) || escapeHtml(f.content)
+})
+
+function escapeHtml(s) {
+  return String(s ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+}
+
+const area = ref(null)
+const backdrop = ref(null)
+
+/** textarea 滚动 → 高亮层同步 */
+function onScroll() {
+  if (!area.value || !backdrop.value) return
+  backdrop.value.scrollTop = area.value.scrollTop
+  backdrop.value.scrollLeft = area.value.scrollLeft
+}
+
+let resizeObs = null
+function onBackdropRef(el) {
+  backdrop.value = el
+  if (resizeObs) {
+    resizeObs.disconnect()
+    resizeObs = null
+  }
+  if (el && typeof ResizeObserver !== 'undefined' && area.value) {
+    resizeObs = new ResizeObserver(() => onScroll())
+    resizeObs.observe(area.value)
+  }
+}
+
+onBeforeUnmount(() => {
+  if (resizeObs) resizeObs.disconnect()
+})
 
 function setNotice(text) {
   notice.value = text
@@ -171,21 +215,30 @@ function fileSize(content) {
       <button type="button" class="mfile__btn" :disabled="disabled" @click="addEmptyFile">[ 新建 ]</button>
     </div>
 
-    <!-- 选中文件编辑器 -->
+    <!-- 选中文件编辑器（overlay 高亮） -->
     <div v-if="activeFile" class="mfile__editor">
       <div class="mfile__ebar mono-data">$ edit {{ activeFile.name }}</div>
       <label class="sr-only" :for="`mfile-area-${activeFile.name}`">编辑 {{ activeFile.name }}</label>
-      <textarea
-        :id="`mfile-area-${activeFile.name}`"
-        class="mfile__area"
-        :style="{ '--editor-min': minHeight }"
-        :value="activeFile.content"
-        :readonly="disabled"
-        spellcheck="false"
-        wrap="off"
-        placeholder="文件内容为空——粘贴或输入源码"
-        @input="updateContent($event.target.value)"
-      ></textarea>
+      <div class="mfile__box" :style="{ '--editor-min': minHeight }">
+        <!-- 高亮遮罩层：与 textarea 逐像素对齐 -->
+        <pre
+          :ref="onBackdropRef"
+          class="mfile__hl"
+          aria-hidden="true"
+        ><code class="hljs" v-html="highlighted"></code></pre>
+        <textarea
+          :id="`mfile-area-${activeFile.name}`"
+          ref="area"
+          class="mfile__area"
+          :value="activeFile.content"
+          :readonly="disabled"
+          spellcheck="false"
+          wrap="off"
+          placeholder="文件内容为空——粘贴或输入源码"
+          @input="updateContent($event.target.value)"
+          @scroll="onScroll"
+        ></textarea>
+      </div>
     </div>
   </div>
 </template>
@@ -343,21 +396,67 @@ function fileSize(content) {
   font-size: var(--text-micro);
 }
 
-.mfile__area {
-  display: block;
-  width: 100%;
+/* overlay 容器：两层同尺寸叠放 */
+.mfile__box {
+  position: relative;
   min-height: var(--editor-min, 280px);
+}
+
+.mfile__hl,
+.mfile__area {
+  margin: 0;
   padding: var(--space-3);
-  border: none;
-  resize: vertical;
-  background: var(--code-bg);
-  color: var(--code-text);
-  caret-color: var(--code-accent);
   font-family: var(--font-mono);
   font-size: var(--text-mono-code);
   line-height: var(--lh-mono-code);
-  outline: none;
+  letter-spacing: normal;
+  tab-size: 4;
+  white-space: pre;
+  word-break: normal;
+  overflow-wrap: normal;
   font-variant-ligatures: none;
   font-feature-settings: "liga" 0, "calt" 0;
+  border: none;
+  border-radius: 0;
+}
+
+.mfile__hl {
+  position: absolute;
+  inset: 0;
+  overflow: auto;
+  background: var(--code-bg);
+  color: var(--code-text);
+  pointer-events: none;
+  user-select: none;
+}
+
+.mfile__hl code {
+  font: inherit;
+  white-space: inherit;
+  background: transparent;
+  display: block;
+  min-height: 100%;
+}
+
+.mfile__area {
+  position: relative;
+  display: block;
+  width: 100%;
+  min-height: var(--editor-min, 280px);
+  resize: vertical;
+  background: transparent;
+  color: transparent;
+  caret-color: var(--code-accent);
+  outline: none;
+  overflow: auto;
+}
+
+.mfile__area::placeholder {
+  color: var(--code-muted);
+}
+
+.mfile__area::selection {
+  background: var(--focus-ring);
+  color: transparent;
 }
 </style>

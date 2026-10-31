@@ -1,6 +1,7 @@
 /**
  * 语法高亮 token 配色 —— 沿用终端色板（tokens.css 的 --code-* 语义变量）。
- * 作用域：题面 (.md-body) / 代码块 (.code-block) / 源码回显 (.src__code)。
+ * 作用域：题面 (.md-body) / 代码块 (.code-block) / 源码回显 (.src__code)
+ * / 编辑器高亮层 (.editor__hl / .mfile__hl)。
  */
 
 .md-body .hljs-keyword,
@@ -17,7 +18,17 @@
 .src__code .hljs-selector-tag,
 .src__code .hljs-literal,
 .src__code .hljs-section,
-.src__code .hljs-doctag {
+.src__code .hljs-doctag,
+.editor__hl .hljs-keyword,
+.mfile__hl .hljs-keyword,
+.editor__hl .hljs-selector-tag,
+.mfile__hl .hljs-selector-tag,
+.editor__hl .hljs-literal,
+.mfile__hl .hljs-literal,
+.editor__hl .hljs-section,
+.mfile__hl .hljs-section,
+.editor__hl .hljs-doctag,
+.mfile__hl .hljs-doctag {
   color: #c792ea; /* 紫：关键字/控制流（同 --verdict-ce-text） */
 }
 
@@ -32,7 +43,15 @@
 .src__code .hljs-type,
 .src__code .hljs-built_in,
 .src__code .hljs-class .hljs-title,
-.src__code .hljs-title.class_ {
+.src__code .hljs-title.class_,
+.editor__hl .hljs-type,
+.mfile__hl .hljs-type,
+.editor__hl .hljs-built_in,
+.mfile__hl .hljs-built_in,
+.editor__hl .hljs-class .hljs-title,
+.mfile__hl .hljs-class .hljs-title,
+.editor__hl .hljs-title.class_,
+.mfile__hl .hljs-title.class_ {
   color: var(--info-text); /* 青：类型/内建 */
 }
 
@@ -44,7 +63,13 @@
 .code-block .hljs-name,
 .src__code .hljs-title,
 .src__code .hljs-title.function_,
-.src__code .hljs-name {
+.src__code .hljs-name,
+.editor__hl .hljs-title,
+.mfile__hl .hljs-title,
+.editor__hl .hljs-title.function_,
+.mfile__hl .hljs-title.function_,
+.editor__hl .hljs-name,
+.mfile__hl .hljs-name {
   color: var(--primary); /* 绿：函数/类名 */
 }
 
@@ -56,7 +81,13 @@
 .code-block .hljs-addition,
 .src__code .hljs-string,
 .src__code .hljs-regexp,
-.src__code .hljs-addition {
+.src__code .hljs-addition,
+.editor__hl .hljs-string,
+.mfile__hl .hljs-string,
+.editor__hl .hljs-regexp,
+.mfile__hl .hljs-regexp,
+.editor__hl .hljs-addition,
+.mfile__hl .hljs-addition {
   color: var(--code-string);
 }
 
@@ -68,7 +99,13 @@
 .code-block .hljs-bullet,
 .src__code .hljs-number,
 .src__code .hljs-symbol,
-.src__code .hljs-bullet {
+.src__code .hljs-bullet,
+.editor__hl .hljs-number,
+.mfile__hl .hljs-number,
+.editor__hl .hljs-symbol,
+.mfile__hl .hljs-symbol,
+.editor__hl .hljs-bullet,
+.mfile__hl .hljs-bullet {
   color: var(--code-number);
 }
 
@@ -80,7 +117,13 @@
 .code-block .hljs-meta,
 .src__code .hljs-comment,
 .src__code .hljs-quote,
-.src__code .hljs-meta {
+.src__code .hljs-meta,
+.editor__hl .hljs-comment,
+.mfile__hl .hljs-comment,
+.editor__hl .hljs-quote,
+.mfile__hl .hljs-quote,
+.editor__hl .hljs-meta,
+.mfile__hl .hljs-meta {
   color: var(--code-comment);
   font-style: italic;
 }
@@ -99,24 +142,40 @@
 .src__code .hljs-attribute,
 .src__code .hljs-variable,
 .src__code .hljs-template-variable,
-.src__code .hljs-params {
+.src__code .hljs-params,
+.editor__hl .hljs-attr,
+.mfile__hl .hljs-attr,
+.editor__hl .hljs-attribute,
+.mfile__hl .hljs-attribute,
+.editor__hl .hljs-variable,
+.mfile__hl .hljs-variable,
+.editor__hl .hljs-template-variable,
+.mfile__hl .hljs-template-variable,
+.editor__hl .hljs-params,
+.mfile__hl .hljs-params {
   color: var(--code-text);
 }
 
 .md-body .hljs-deletion,
 .code-block .hljs-deletion,
-.src__code .hljs-deletion {
+.src__code .hljs-deletion,
+.editor__hl .hljs-deletion,
+.mfile__hl .hljs-deletion {
   color: var(--danger-text);
 }
 
 .md-body .hljs-emphasis,
 .code-block .hljs-emphasis,
-.src__code .hljs-emphasis {
+.src__code .hljs-emphasis,
+.editor__hl .hljs-emphasis,
+.mfile__hl .hljs-emphasis {
   font-style: italic;
 }
 
 .md-body .hljs-strong,
 .code-block .hljs-strong,
-.src__code .hljs-strong {
+.src__code .hljs-strong,
+.editor__hl .hljs-strong,
+.mfile__hl .hljs-strong {
   font-weight: 700;
 }

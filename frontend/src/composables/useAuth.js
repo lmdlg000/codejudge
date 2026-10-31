@@ -153,7 +153,15 @@ export function initAuth(deps = {}) {
         '',
         window.location.pathname + (q ? '?' + q : '') + (failed ? '' : hash.replace(/(^#|&)verified=1/, ''))
       )
-      if (deps.router) deps.router.replace(failed ? '/auth/verified?failed=1' : '/auth/verified')
+      if (deps.router) {
+        // 仅在当前确为验证落地（根路径或 hash 空/根）时跳验证页；
+        // hash 路由下 fullPath 在 hash 内，误判会把题目页刷新踢回首页
+        const inHash = window.location.hash || ''
+        const hashPath = inHash.replace(/^#/, '').split(/[?#]/)[0]
+        const onRoot = window.location.pathname.replace(/\/+$/, '') === siteRootUrl().replace(/^https?:\/\/[^/]+/, '').replace(/\/+$/, '')
+        const atHome = (!hashPath || hashPath === '/') && onRoot
+        if (atHome) deps.router.replace(failed ? '/auth/verified?failed=1' : '/auth/verified')
+      }
     }
   } catch {
     /* ignore */
