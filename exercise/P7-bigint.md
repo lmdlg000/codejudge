@@ -53,7 +53,7 @@ public:
     friend BigInt operator+(const BigInt& left, const BigInt& right);
     friend BigInt operator*(const BigInt& left, const BigInt& right);
     BigInt& operator+=(const BigInt& right);
-    BigInt& operator*=(const BigInt& o);
+    BigInt& operator*=(const BigInt& right);
 
     bool operator==(const BigInt& o) const;
     bool operator!=(const BigInt& o) const;

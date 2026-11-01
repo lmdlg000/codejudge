@@ -174,8 +174,8 @@ BigInt& BigInt::operator+=(const BigInt& right) {
     return *this;
 }
 
-BigInt& BigInt::operator*=(const BigInt& o) {
-    if (isZero || o.isZero) {
+BigInt& BigInt::operator*=(const BigInt& right) {
+    if (isZero || right.isZero) {
         // 结果为 0
         delete[] s;
         size = 1;
@@ -185,12 +185,12 @@ BigInt& BigInt::operator*=(const BigInt& o) {
         isZero = true;
         return *this;
     }
-    size_t n = len + o.len;
+    size_t n = len + right.len;
     int* acc = new int[n]();
     for (size_t i = 0; i < len; i++) {
         int a = s[len - 1 - i] - '0';
-        for (size_t j = 0; j < o.len; j++) {
-            acc[i + j] += a * (o.s[o.len - 1 - j] - '0');
+        for (size_t j = 0; j < right.len; j++) {
+            acc[i + j] += a * (right.s[right.len - 1 - j] - '0');
         }
     }
     int carry = 0;
