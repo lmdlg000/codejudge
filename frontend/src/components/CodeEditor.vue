@@ -169,6 +169,7 @@ function onFile(e) {
 .editor__area {
   margin: 0;
   padding: var(--space-3) var(--space-4);
+  box-sizing: border-box;
   font-family: var(--font-mono);
   font-size: var(--text-mono-code);
   line-height: var(--lh-mono-code);
@@ -181,6 +182,7 @@ function onFile(e) {
   font-feature-settings: "liga" 0, "calt" 0;
   border: none;
   border-radius: 0;
+  scrollbar-gutter: stable;
 }
 
 .editor__hl {
