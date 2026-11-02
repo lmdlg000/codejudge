@@ -1,12 +1,10 @@
 <script setup>
 /**
- * 代码编辑区（design-spec 5.8）：textarea + 高亮遮罩层（overlay）。
- * textarea 自身无法语法高亮，用「透明字色 textarea + 背景 pre」叠加实现：
- * 两层字体/行高/内边距严格一致，滚动同步，光标仍走原生 textarea。
- * 预填 main 骨架；空码时父组件禁用提交；wrap="off" 横向滚动；
- * 焦点容器 2px 焦点环；label 关联（无障碍硬项）。
+ * 代码编辑区：contenteditable <pre> + 语法高亮。
+ * 单层结构——文字直接渲染在 pre 里，选中天然对齐（与题面代码块一致）。
+ * 输入后防抖重新高亮（保存/恢复光标）；Tab 插入 4 空格；粘贴纯文本。
  */
-import { computed, ref, onBeforeUnmount, nextTick, watch } from 'vue'
+import { ref, onMounted, onBeforeUnmount, watch } from 'vue'
 import { highlightCode, langFromFilename } from '../utils/hljs.js'
 
 const props = defineProps({
@@ -18,18 +16,10 @@ const props = defineProps({
 
 const emit = defineEmits(['update:modelValue', 'upload'])
 
-const uid = `editor-${Math.random().toString(36).slice(2, 9)}`
-
-const value = computed({
-  get: () => props.modelValue,
-  set: (v) => emit('update:modelValue', v)
-})
-
-/** 高亮层 HTML（语言未知回退纯文本转义） */
-const highlighted = computed(() => {
-  const lang = langFromFilename(props.filename)
-  return highlightCode(props.modelValue, lang) || escapeHtml(props.modelValue)
-})
+const area = ref(null)
+let rehighlightTimer = null
+let isComposing = false
+let isInternalUpdate = false
 
 function escapeHtml(s) {
   return String(s ?? '')
@@ -38,78 +28,96 @@ function escapeHtml(s) {
     .replace(/>/g, '&gt;')
 }
 
-const area = ref(null)
-const backdrop = ref(null)
-
-/** textarea 滚动 → 高亮层同步 */
-function onScroll() {
-  if (!area.value || !backdrop.value) return
-  backdrop.value.scrollTop = area.value.scrollTop
-  backdrop.value.scrollLeft = area.value.scrollLeft
+function getHighlightedHtml(text) {
+  const lang = langFromFilename(props.filename)
+  return highlightCode(text, lang) || escapeHtml(text)
 }
 
-/**
- * 运行时像素级对齐：用 Range API 测量 pre 中首行文本的实际渲染位置，
- * 与 textarea 的内容起点对比，动态补偿偏移。
- */
-function alignOverlay() {
-  if (!area.value || !backdrop.value) return
-  const code = backdrop.value.querySelector('code')
-  if (!code || !code.firstChild) return
-
-  // 用 Range 测量 pre/code 中首行文本的首字符实际渲染位置
-  const range = document.createRange()
-  const firstNode = code.firstChild
-  if (firstNode.nodeType !== Node.TEXT_NODE && firstNode.firstChild) {
-    range.setStart(firstNode.firstChild, 0)
-  } else {
-    range.setStart(firstNode, 0)
+/** 纯文本 → 光标偏移量 */
+function getTextOffset(root, node, offset) {
+  let textOffset = 0
+  const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, null)
+  let current
+  while ((current = walker.nextNode())) {
+    if (current === node) return textOffset + offset
+    textOffset += current.textContent.length
   }
-  range.setEnd(range.startContainer, 1)
-  const textRect = range.getBoundingClientRect()
-  range.detach()
+  return textOffset
+}
 
-  // textarea 的文本起点 = 元素位置 + border + padding
-  const aStyle = window.getComputedStyle(area.value)
-  const areaRect = area.value.getBoundingClientRect()
-  const expectedY = areaRect.top + (parseFloat(aStyle.borderTopWidth) || 0) + (parseFloat(aStyle.paddingTop) || 0)
-  const expectedX = areaRect.left + (parseFloat(aStyle.borderLeftWidth) || 0) + (parseFloat(aStyle.paddingLeft) || 0)
+/** 光标偏移量 → Range（用于恢复光标） */
+function setTextOffset(root, targetOffset) {
+  const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, null)
+  let current
+  let offset = 0
+  while ((current = walker.nextNode())) {
+    const len = current.textContent.length
+    if (offset + len >= targetOffset) {
+      const r = document.createRange()
+      r.setStart(current, Math.min(targetOffset - offset, len))
+      r.collapse(true)
+      return r
+    }
+    offset += len
+  }
+  return null
+}
 
-  // 补偿偏移：pre 文本实际位置 vs textarea 文本预期位置
-  const deltaY = expectedY - textRect.top
-  const deltaX = expectedX - textRect.left
+/** 重新高亮并恢复光标 */
+function rehighlight() {
+  if (!area.value) return
+  const selection = window.getSelection()
+  let textOffset = 0
+  let hasCursor = false
 
-  if (Math.abs(deltaY) > 0.5 || Math.abs(deltaX) > 0.5) {
-    backdrop.value.style.transform = `translate(${deltaX}px, ${deltaY}px)`
-  } else {
-    backdrop.value.style.transform = ''
+  if (selection && selection.rangeCount > 0) {
+    const range = selection.getRangeAt(0)
+    if (area.value.contains(range.startContainer)) {
+      textOffset = getTextOffset(area.value, range.startContainer, range.startOffset)
+      hasCursor = true
+    }
+  }
+
+  const text = area.value.textContent || ''
+  isInternalUpdate = true
+  area.value.innerHTML = getHighlightedHtml(text)
+
+  if (hasCursor) {
+    const newRange = setTextOffset(area.value, textOffset)
+    if (newRange) {
+      selection.removeAllRanges()
+      selection.addRange(newRange)
+    }
+  }
+  isInternalUpdate = false
+}
+
+function onInput() {
+  if (isComposing || isInternalUpdate) return
+  const text = area.value.textContent || ''
+  emit('update:modelValue', text)
+  clearTimeout(rehighlightTimer)
+  rehighlightTimer = setTimeout(rehighlight, 350)
+}
+
+function onKeydown(e) {
+  if (e.key === 'Tab') {
+    e.preventDefault()
+    document.execCommand('insertText', false, '    ')
   }
 }
 
-let resizeObs = null
-function onBackdropRef(el) {
-  backdrop.value = el
-  if (el && typeof ResizeObserver !== 'undefined' && area.value) {
-    resizeObs = new ResizeObserver(() => {
-      onScroll()
-      alignOverlay()
-    })
-    resizeObs.observe(area.value)
-    // 首帧对齐
-    requestAnimationFrame(() => alignOverlay())
-  }
+function onPaste(e) {
+  e.preventDefault()
+  const text = (e.clipboardData || window.clipboardData).getData('text/plain')
+  document.execCommand('insertText', false, text)
 }
 
-onBeforeUnmount(() => {
-  if (resizeObs) resizeObs.disconnect()
-})
-
-// 内容变化后重新对齐（v-html 更新后 DOM 需要一帧渲染）
-watch(highlighted, () => {
-  nextTick(() => {
-    requestAnimationFrame(() => alignOverlay())
-  })
-})
+function onCompositionStart() { isComposing = true }
+function onCompositionEnd() {
+  isComposing = false
+  onInput()
+}
 
 function onFile(e) {
   const file = e.target.files && e.target.files[0]
@@ -121,6 +129,31 @@ function onFile(e) {
   }
   reader.readAsText(file)
 }
+
+// 外部改 modelValue（如上传文件）→ 更新 DOM
+watch(() => props.modelValue, (val) => {
+  if (area.value && area.value.textContent !== val) {
+    isInternalUpdate = true
+    area.value.innerHTML = getHighlightedHtml(val)
+    isInternalUpdate = false
+  }
+})
+
+onMounted(() => {
+  if (area.value) {
+    area.value.innerHTML = getHighlightedHtml(props.modelValue)
+    area.value.addEventListener('compositionstart', onCompositionStart)
+    area.value.addEventListener('compositionend', onCompositionEnd)
+  }
+})
+
+onBeforeUnmount(() => {
+  clearTimeout(rehighlightTimer)
+  if (area.value) {
+    area.value.removeEventListener('compositionstart', onCompositionStart)
+    area.value.removeEventListener('compositionend', onCompositionEnd)
+  }
+})
 </script>
 
 <template>
@@ -137,26 +170,19 @@ function onFile(e) {
         />
       </label>
     </div>
-    <label class="sr-only" :for="uid">源码编辑区</label>
-    <div class="editor__box">
-      <!-- 高亮遮罩层：与 textarea 逐像素对齐 -->
-      <pre
-        :ref="onBackdropRef"
-        class="editor__hl"
-        aria-hidden="true"
-      ><code class="hljs" v-html="highlighted"></code></pre>
-      <textarea
-        :id="uid"
-        ref="area"
-        v-model="value"
-        class="editor__area"
-        :readonly="readonly"
-        spellcheck="false"
-        wrap="off"
-        placeholder="把 main.cpp 的内容贴到这里"
-        @scroll="onScroll"
-      ></textarea>
-    </div>
+    <div
+      ref="area"
+      class="editor__code"
+      :contenteditable="!readonly"
+      :style="{ minHeight }"
+      role="textbox"
+      aria-multiline="true"
+      aria-label="源码编辑区"
+      spellcheck="false"
+      @input="onInput"
+      @keydown="onKeydown"
+      @paste="onPaste"
+    ></div>
   </div>
 </template>
 
@@ -209,21 +235,13 @@ function onFile(e) {
   outline-offset: 2px;
 }
 
-/* overlay 容器：两层同尺寸叠放 */
-.editor__box {
-  position: relative;
-  min-height: var(--editor-min);
-}
-
-.editor__hl,
-.editor__area {
+.editor__code {
+  display: block;
   margin: 0;
   padding: var(--space-3) var(--space-4);
-  box-sizing: border-box;
   font-family: var(--font-mono);
   font-size: var(--text-mono-code);
-  /* 用固定像素行高避免小数行高在 textarea/pre 间取整差异导致错位 */
-  line-height: 22px;
+  line-height: var(--lh-mono-code);
   letter-spacing: normal;
   tab-size: 4;
   white-space: pre;
@@ -231,64 +249,11 @@ function onFile(e) {
   overflow-wrap: normal;
   font-variant-ligatures: none;
   font-feature-settings: "liga" 0, "calt" 0;
-  font-synthesis: none;
-  text-rendering: geometricPrecision;
-  border: none;
-  border-radius: 0;
-  scrollbar-gutter: stable;
-}
-
-.editor__hl {
-  position: absolute;
-  inset: 0;
-  overflow: scroll;
-  background: var(--code-bg);
   color: var(--code-text);
-  pointer-events: none;
-  user-select: none;
-  /* 滚动条不可见但占位——保证与 textarea 内容区等宽 */
-  scrollbar-color: transparent transparent;
-}
-
-.editor__hl::-webkit-scrollbar {
-  background: transparent;
-}
-.editor__hl::-webkit-scrollbar-thumb {
-  background: transparent;
-}
-.editor__hl::-webkit-scrollbar-track {
-  background: transparent;
-}
-
-.editor__hl code {
-  font: inherit;
-  white-space: inherit;
-  background: transparent;
-  display: block;
-  min-height: 100%;
-}
-
-.editor__area {
-  position: relative;
-  display: block;
-  width: 100%;
-  min-height: var(--editor-min);
-  resize: vertical;
-  appearance: none;
-  -webkit-appearance: none;
-  background: transparent;
-  color: transparent;
+  background: var(--code-bg);
   caret-color: var(--code-accent);
   outline: none;
-  overflow: scroll;
-}
-
-.editor__area::placeholder {
-  color: var(--code-muted);
-}
-
-.editor__area::selection {
-  background: rgba(61, 255, 122, 0.35);
+  overflow: auto;
 }
 
 @media (max-width: 1279px) {
