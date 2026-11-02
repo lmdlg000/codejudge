@@ -188,7 +188,7 @@ function onFile(e) {
 .editor__hl {
   position: absolute;
   inset: 0;
-  overflow: auto;
+  overflow: hidden;
   background: var(--code-bg);
   color: var(--code-text);
   pointer-events: none;
@@ -222,7 +222,6 @@ function onFile(e) {
 
 .editor__area::selection {
   background: var(--focus-ring);
-  color: transparent;
 }
 
 @media (max-width: 1279px) {
