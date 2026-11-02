@@ -172,7 +172,8 @@ function onFile(e) {
   box-sizing: border-box;
   font-family: var(--font-mono);
   font-size: var(--text-mono-code);
-  line-height: var(--lh-mono-code);
+  /* 用固定像素行高避免小数行高在 textarea/pre 间取整差异导致错位 */
+  line-height: 22px;
   letter-spacing: normal;
   tab-size: 4;
   white-space: pre;
@@ -180,6 +181,7 @@ function onFile(e) {
   overflow-wrap: normal;
   font-variant-ligatures: none;
   font-feature-settings: "liga" 0, "calt" 0;
+  text-rendering: geometricPrecision;
   border: none;
   border-radius: 0;
   scrollbar-gutter: stable;
@@ -188,11 +190,23 @@ function onFile(e) {
 .editor__hl {
   position: absolute;
   inset: 0;
-  overflow: hidden;
+  overflow: scroll;
   background: var(--code-bg);
   color: var(--code-text);
   pointer-events: none;
   user-select: none;
+  /* 滚动条不可见但占位——保证与 textarea 内容区等宽 */
+  scrollbar-color: transparent transparent;
+}
+
+.editor__hl::-webkit-scrollbar {
+  background: transparent;
+}
+.editor__hl::-webkit-scrollbar-thumb {
+  background: transparent;
+}
+.editor__hl::-webkit-scrollbar-track {
+  background: transparent;
 }
 
 .editor__hl code {
@@ -213,7 +227,7 @@ function onFile(e) {
   color: transparent;
   caret-color: var(--code-accent);
   outline: none;
-  overflow: auto;
+  overflow: scroll;
 }
 
 .editor__area::placeholder {
