@@ -6,7 +6,7 @@
  * 预填 main 骨架；空码时父组件禁用提交；wrap="off" 横向滚动；
  * 焦点容器 2px 焦点环；label 关联（无障碍硬项）。
  */
-import { computed, ref, onBeforeUnmount } from 'vue'
+import { computed, ref, onBeforeUnmount, nextTick, watch } from 'vue'
 import { highlightCode, langFromFilename } from '../utils/hljs.js'
 
 const props = defineProps({
@@ -48,17 +48,79 @@ function onScroll() {
   backdrop.value.scrollLeft = area.value.scrollLeft
 }
 
+/**
+ * 运行时像素级对齐：用 Range API 测量 pre 中首行文本的实际位置，
+ * 与 textarea 的内容起点对比，动态补偿偏移。
+ * 这不依赖 CSS 猜测，直接测量浏览器实际渲染结果。
+ */
+function alignOverlay() {
+  if (!area.value || !backdrop.value) return
+  const code = backdrop.value.querySelector('code')
+  if (!code || !code.firstChild) return
+
+  // 用 Range 测量 pre/code 中首行文本的首字符位置
+  const range = document.createRange()
+  const firstNode = code.firstChild
+  if (firstNode.nodeType !== Node.TEXT_NODE && firstNode.firstChild) {
+    range.setStart(firstNode.firstChild, 0)
+  } else {
+    range.setStart(firstNode, 0)
+  }
+  range.setEnd(range.startContainer, 1)
+  const textRect = range.getBoundingClientRect()
+  range.detach()
+
+  // textarea 的内容起点 = padding-top + border-top
+  const aStyle = window.getComputedStyle(area.value)
+  const aPadTop = parseFloat(aStyle.paddingTop) || 0
+  const aBorderTop = parseFloat(aStyle.borderTopWidth) || 0
+  const areaRect = area.value.getBoundingClientRect()
+  const expectedY = areaRect.top + aBorderTop + aPadTop
+
+  // pre 的内容起点
+  const pStyle = window.getComputedStyle(backdrop.value)
+  const pPadTop = parseFloat(pStyle.paddingTop) || 0
+  const pBorderTop = parseFloat(pStyle.borderTopWidth) || 0
+  const preRect = backdrop.value.getBoundingClientRect()
+  const actualY = preRect.top + pBorderTop + pPadTop
+
+  // 补偿垂直偏移（textarea 文本首行 vs pre 文本首行）
+  const deltaY = expectedY - actualY
+
+  // 补偿水平偏移（首个字符的 X 位置）
+  const expectedX = areaRect.left + (parseFloat(aStyle.paddingLeft) || 0) + (parseFloat(aStyle.borderLeftWidth) || 0)
+  const deltaX = expectedX - textRect.left
+
+  if (Math.abs(deltaY) > 0.5 || Math.abs(deltaX) > 0.5) {
+    backdrop.value.style.transform = `translate(${deltaX}px, ${deltaY}px)`
+  } else {
+    backdrop.value.style.transform = ''
+  }
+}
+
 let resizeObs = null
 function onBackdropRef(el) {
   backdrop.value = el
   if (el && typeof ResizeObserver !== 'undefined' && area.value) {
-    resizeObs = new ResizeObserver(() => onScroll())
+    resizeObs = new ResizeObserver(() => {
+      onScroll()
+      alignOverlay()
+    })
     resizeObs.observe(area.value)
+    // 首帧对齐
+    requestAnimationFrame(() => alignOverlay())
   }
 }
 
 onBeforeUnmount(() => {
   if (resizeObs) resizeObs.disconnect()
+})
+
+// 内容变化后重新对齐（v-html 更新后 DOM 需要一帧渲染）
+watch(highlighted, () => {
+  nextTick(() => {
+    requestAnimationFrame(() => alignOverlay())
+  })
 })
 
 function onFile(e) {
@@ -181,6 +243,7 @@ function onFile(e) {
   overflow-wrap: normal;
   font-variant-ligatures: none;
   font-feature-settings: "liga" 0, "calt" 0;
+  font-synthesis: none;
   text-rendering: geometricPrecision;
   border: none;
   border-radius: 0;
