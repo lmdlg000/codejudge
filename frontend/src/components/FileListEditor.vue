@@ -3,9 +3,9 @@
  * 多文件提交面板 —— 「多个源代码上传提交评测」核心 UI。
  * 能力：多选上传 / 新建空文件 / 选中编辑 / 删除；文件名白名单与后端一致
  * （字母数字 _ . -，1–64 字符）；内容以文本读入（源码提交）。
- * 编辑区为 overlay 高亮：透明字色 textarea + 背景 pre（按文件名推断语言）。
+ * 编辑区为 contenteditable pre + 语法高亮（单层，选中天然对齐）。
  */
-import { computed, ref, onBeforeUnmount } from 'vue'
+import { computed, ref, onMounted, onBeforeUnmount, watch, nextTick } from 'vue'
 import { highlightCode, langFromFilename } from '../utils/hljs.js'
 
 const props = defineProps({
@@ -31,13 +31,10 @@ const files = computed({
 
 const activeFile = computed(() => files.value.find((f) => f.name === activeName.value) || null)
 
-/** 高亮层 HTML：按当前文件名推断语言；未知语言回退纯文本转义 */
-const highlighted = computed(() => {
-  const f = activeFile.value
-  if (!f) return ''
-  const lang = langFromFilename(f.name)
-  return highlightCode(f.content, lang) || escapeHtml(f.content)
-})
+const area = ref(null)
+let rehighlightTimer = null
+let isComposing = false
+let isInternalUpdate = false
 
 function escapeHtml(s) {
   return String(s ?? '')
@@ -46,31 +43,113 @@ function escapeHtml(s) {
     .replace(/>/g, '&gt;')
 }
 
-const area = ref(null)
-const backdrop = ref(null)
-
-/** textarea 滚动 → 高亮层同步 */
-function onScroll() {
-  if (!area.value || !backdrop.value) return
-  backdrop.value.scrollTop = area.value.scrollTop
-  backdrop.value.scrollLeft = area.value.scrollLeft
+function getHighlightedHtml(text, filename) {
+  const lang = langFromFilename(filename)
+  return highlightCode(text, lang) || escapeHtml(text)
 }
 
-let resizeObs = null
-function onBackdropRef(el) {
-  backdrop.value = el
-  if (resizeObs) {
-    resizeObs.disconnect()
-    resizeObs = null
+function getTextOffset(root, node, offset) {
+  let textOffset = 0
+  const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, null)
+  let current
+  while ((current = walker.nextNode())) {
+    if (current === node) return textOffset + offset
+    textOffset += current.textContent.length
   }
-  if (el && typeof ResizeObserver !== 'undefined' && area.value) {
-    resizeObs = new ResizeObserver(() => onScroll())
-    resizeObs.observe(area.value)
+  return textOffset
+}
+
+function setTextOffset(root, targetOffset) {
+  const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, null)
+  let current
+  let offset = 0
+  while ((current = walker.nextNode())) {
+    const len = current.textContent.length
+    if (offset + len >= targetOffset) {
+      const r = document.createRange()
+      r.setStart(current, Math.min(targetOffset - offset, len))
+      r.collapse(true)
+      return r
+    }
+    offset += len
+  }
+  return null
+}
+
+function rehighlight() {
+  if (!area.value || !activeFile.value) return
+  const selection = window.getSelection()
+  let textOffset = 0
+  let hasCursor = false
+  if (selection && selection.rangeCount > 0) {
+    const range = selection.getRangeAt(0)
+    if (area.value.contains(range.startContainer)) {
+      textOffset = getTextOffset(area.value, range.startContainer, range.startOffset)
+      hasCursor = true
+    }
+  }
+  const text = area.value.textContent || ''
+  isInternalUpdate = true
+  area.value.innerHTML = getHighlightedHtml(text, activeFile.value.name)
+  if (hasCursor) {
+    const newRange = setTextOffset(area.value, textOffset)
+    if (newRange) {
+      selection.removeAllRanges()
+      selection.addRange(newRange)
+    }
+  }
+  isInternalUpdate = false
+}
+
+function onInput() {
+  if (isComposing || isInternalUpdate || !area.value) return
+  updateContent(area.value.textContent || '')
+  clearTimeout(rehighlightTimer)
+  rehighlightTimer = setTimeout(rehighlight, 350)
+}
+
+function onKeydown(e) {
+  if (e.key === 'Tab') {
+    e.preventDefault()
+    document.execCommand('insertText', false, '    ')
   }
 }
+
+function onPaste(e) {
+  e.preventDefault()
+  const text = (e.clipboardData || window.clipboardData).getData('text/plain')
+  document.execCommand('insertText', false, text)
+}
+
+function onCompositionStart() { isComposing = true }
+function onCompositionEnd() {
+  isComposing = false
+  onInput()
+}
+
+// 切换文件时更新编辑器内容
+watch(activeFile, (f) => {
+  if (area.value && f) {
+    isInternalUpdate = true
+    area.value.innerHTML = getHighlightedHtml(f.content, f.name)
+    isInternalUpdate = false
+  }
+})
+
+onMounted(() => {
+  if (area.value && activeFile.value) {
+    area.value.innerHTML = getHighlightedHtml(activeFile.value.content, activeFile.value.name)
+    area.value.addEventListener('compositionstart', onCompositionStart)
+    area.value.addEventListener('compositionend', onCompositionEnd)
+  }
+})
 
 onBeforeUnmount(() => {
-  if (resizeObs) resizeObs.disconnect()
+  clearTimeout(rehighlightTimer)
+  if (area.value) {
+    area.value.removeEventListener('compositionstart', onCompositionStart)
+    area.value.removeEventListener('compositionend', onCompositionEnd)
+  }
 })
 
 function setNotice(text) {
@@ -215,29 +294,23 @@ function fileSize(content) {
       <button type="button" class="mfile__btn" :disabled="disabled" @click="addEmptyFile">[ 新建 ]</button>
     </div>
 
-    <!-- 选中文件编辑器（overlay 高亮） -->
+    <!-- 选中文件编辑器（contenteditable + 高亮） -->
     <div v-if="activeFile" class="mfile__editor">
       <div class="mfile__ebar mono-data">$ edit {{ activeFile.name }}</div>
-      <label class="sr-only" :for="`mfile-area-${activeFile.name}`">编辑 {{ activeFile.name }}</label>
       <div class="mfile__box" :style="{ '--editor-min': minHeight }">
-        <!-- 高亮遮罩层：与 textarea 逐像素对齐 -->
-        <pre
-          :ref="onBackdropRef"
-          class="mfile__hl"
-          aria-hidden="true"
-        ><code class="hljs" v-html="highlighted"></code></pre>
-        <textarea
-          :id="`mfile-area-${activeFile.name}`"
+        <div
           ref="area"
-          class="mfile__area"
-          :value="activeFile.content"
-          :readonly="disabled"
+          class="mfile__code"
+          :contenteditable="!disabled"
+          :style="{ minHeight }"
+          role="textbox"
+          aria-multiline="true"
+          :aria-label="`编辑 ${activeFile.name}`"
           spellcheck="false"
-          wrap="off"
-          placeholder="文件内容为空——粘贴或输入源码"
-          @input="updateContent($event.target.value)"
-          @scroll="onScroll"
-        ></textarea>
+          @input="onInput"
+          @keydown="onKeydown"
+          @paste="onPaste"
+        ></div>
       </div>
     </div>
   </div>
@@ -396,14 +469,9 @@ function fileSize(content) {
   font-size: var(--text-micro);
 }
 
-/* overlay 容器：两层同尺寸叠放 */
-.mfile__box {
-  position: relative;
-  min-height: var(--editor-min, 280px);
-}
-
-.mfile__hl,
-.mfile__area {
+/* contenteditable 编辑区（单层，选中天然对齐） */
+.mfile__code {
+  display: block;
   margin: 0;
   padding: var(--space-3);
   font-family: var(--font-mono);
@@ -416,47 +484,11 @@ function fileSize(content) {
   overflow-wrap: normal;
   font-variant-ligatures: none;
   font-feature-settings: "liga" 0, "calt" 0;
-  border: none;
-  border-radius: 0;
-}
-
-.mfile__hl {
-  position: absolute;
-  inset: 0;
-  overflow: auto;
-  background: var(--code-bg);
   color: var(--code-text);
-  pointer-events: none;
-  user-select: none;
-}
-
-.mfile__hl code {
-  font: inherit;
-  white-space: inherit;
-  background: transparent;
-  display: block;
-  min-height: 100%;
-}
-
-.mfile__area {
-  position: relative;
-  display: block;
-  width: 100%;
-  min-height: var(--editor-min, 280px);
-  resize: vertical;
-  background: transparent;
-  color: transparent;
+  background: var(--code-bg);
   caret-color: var(--code-accent);
   outline: none;
   overflow: auto;
-}
-
-.mfile__area::placeholder {
-  color: var(--code-muted);
-}
-
-.mfile__area::selection {
-  background: var(--focus-ring);
-  color: transparent;
+  min-height: var(--editor-min, 280px);
 }
 </style>
