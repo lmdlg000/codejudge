@@ -49,16 +49,15 @@ function onScroll() {
 }
 
 /**
- * 运行时像素级对齐：用 Range API 测量 pre 中首行文本的实际位置，
+ * 运行时像素级对齐：用 Range API 测量 pre 中首行文本的实际渲染位置，
  * 与 textarea 的内容起点对比，动态补偿偏移。
- * 这不依赖 CSS 猜测，直接测量浏览器实际渲染结果。
  */
 function alignOverlay() {
   if (!area.value || !backdrop.value) return
   const code = backdrop.value.querySelector('code')
   if (!code || !code.firstChild) return
 
-  // 用 Range 测量 pre/code 中首行文本的首字符位置
+  // 用 Range 测量 pre/code 中首行文本的首字符实际渲染位置
   const range = document.createRange()
   const firstNode = code.firstChild
   if (firstNode.nodeType !== Node.TEXT_NODE && firstNode.firstChild) {
@@ -70,25 +69,14 @@ function alignOverlay() {
   const textRect = range.getBoundingClientRect()
   range.detach()
 
-  // textarea 的内容起点 = padding-top + border-top
+  // textarea 的文本起点 = 元素位置 + border + padding
   const aStyle = window.getComputedStyle(area.value)
-  const aPadTop = parseFloat(aStyle.paddingTop) || 0
-  const aBorderTop = parseFloat(aStyle.borderTopWidth) || 0
   const areaRect = area.value.getBoundingClientRect()
-  const expectedY = areaRect.top + aBorderTop + aPadTop
+  const expectedY = areaRect.top + (parseFloat(aStyle.borderTopWidth) || 0) + (parseFloat(aStyle.paddingTop) || 0)
+  const expectedX = areaRect.left + (parseFloat(aStyle.borderLeftWidth) || 0) + (parseFloat(aStyle.paddingLeft) || 0)
 
-  // pre 的内容起点
-  const pStyle = window.getComputedStyle(backdrop.value)
-  const pPadTop = parseFloat(pStyle.paddingTop) || 0
-  const pBorderTop = parseFloat(pStyle.borderTopWidth) || 0
-  const preRect = backdrop.value.getBoundingClientRect()
-  const actualY = preRect.top + pBorderTop + pPadTop
-
-  // 补偿垂直偏移（textarea 文本首行 vs pre 文本首行）
-  const deltaY = expectedY - actualY
-
-  // 补偿水平偏移（首个字符的 X 位置）
-  const expectedX = areaRect.left + (parseFloat(aStyle.paddingLeft) || 0) + (parseFloat(aStyle.borderLeftWidth) || 0)
+  // 补偿偏移：pre 文本实际位置 vs textarea 文本预期位置
+  const deltaY = expectedY - textRect.top
   const deltaX = expectedX - textRect.left
 
   if (Math.abs(deltaY) > 0.5 || Math.abs(deltaX) > 0.5) {
@@ -286,6 +274,8 @@ function onFile(e) {
   width: 100%;
   min-height: var(--editor-min);
   resize: vertical;
+  appearance: none;
+  -webkit-appearance: none;
   background: transparent;
   color: transparent;
   caret-color: var(--code-accent);
@@ -298,7 +288,7 @@ function onFile(e) {
 }
 
 .editor__area::selection {
-  background: var(--focus-ring);
+  background: rgba(61, 255, 122, 0.35);
 }
 
 @media (max-width: 1279px) {
