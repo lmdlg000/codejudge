@@ -7,6 +7,7 @@
  */
 import { computed, ref, onMounted, onBeforeUnmount, watch, nextTick } from 'vue'
 import { highlightCode, langFromFilename } from '../utils/hljs.js'
+import { captureEditableState, rehighlightEditable } from '../utils/editable.js'
 
 const props = defineProps({
   /** @type {{name:string, content:string}[]} */
@@ -48,56 +49,11 @@ function getHighlightedHtml(text, filename) {
   return highlightCode(text, lang) || escapeHtml(text)
 }
 
-function getTextOffset(root, node, offset) {
-  let textOffset = 0
-  const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, null)
-  let current
-  while ((current = walker.nextNode())) {
-    if (current === node) return textOffset + offset
-    textOffset += current.textContent.length
-  }
-  return textOffset
-}
-
-function setTextOffset(root, targetOffset) {
-  const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, null)
-  let current
-  let offset = 0
-  while ((current = walker.nextNode())) {
-    const len = current.textContent.length
-    if (offset + len >= targetOffset) {
-      const r = document.createRange()
-      r.setStart(current, Math.min(targetOffset - offset, len))
-      r.collapse(true)
-      return r
-    }
-    offset += len
-  }
-  return null
-}
-
 function rehighlight() {
   if (!area.value || !activeFile.value) return
-  const selection = window.getSelection()
-  let textOffset = 0
-  let hasCursor = false
-  if (selection && selection.rangeCount > 0) {
-    const range = selection.getRangeAt(0)
-    if (area.value.contains(range.startContainer)) {
-      textOffset = getTextOffset(area.value, range.startContainer, range.startOffset)
-      hasCursor = true
-    }
-  }
-  const text = area.value.textContent || ''
+  const state = captureEditableState(area.value)
   isInternalUpdate = true
-  area.value.innerHTML = getHighlightedHtml(text, activeFile.value.name)
-  if (hasCursor) {
-    const newRange = setTextOffset(area.value, textOffset)
-    if (newRange) {
-      selection.removeAllRanges()
-      selection.addRange(newRange)
-    }
-  }
+  rehighlightEditable(area.value, getHighlightedHtml(area.value.textContent || '', activeFile.value.name), state)
   isInternalUpdate = false
 }
 
@@ -127,11 +83,13 @@ function onCompositionEnd() {
   onInput()
 }
 
-// 切换文件时更新编辑器内容
+// 切换文件时更新编辑器内容（换文件不保留上一个文件的选区）
 watch(activeFile, (f) => {
   if (area.value && f) {
     isInternalUpdate = true
-    area.value.innerHTML = getHighlightedHtml(f.content, f.name)
+    rehighlightEditable(area.value, getHighlightedHtml(f.content, f.name), null)
+    area.value.scrollTop = 0
+    area.value.scrollLeft = 0
     isInternalUpdate = false
   }
 })
@@ -300,7 +258,7 @@ function fileSize(content) {
       <div class="mfile__box" :style="{ '--editor-min': minHeight }">
         <div
           ref="area"
-          class="mfile__code"
+          class="mfile__code mfile__hl"
           :contenteditable="!disabled"
           :style="{ minHeight }"
           role="textbox"
@@ -476,7 +434,8 @@ function fileSize(content) {
   padding: var(--space-3);
   font-family: var(--font-mono);
   font-size: var(--text-mono-code);
-  line-height: var(--lh-mono-code);
+  /* 整数行高：避免 13px × 1.65 = 21.45px 的半像素行盒在长文件里累积错位 */
+  line-height: 21px;
   letter-spacing: normal;
   tab-size: 4;
   white-space: pre;
@@ -490,5 +449,12 @@ function fileSize(content) {
   outline: none;
   overflow: auto;
   min-height: var(--editor-min, 280px);
+}
+
+/* 选区：半透明底色 + 继承文字色（详见 CodeEditor.vue 同名注释） */
+.mfile__code::selection,
+.mfile__code ::selection {
+  background: rgba(74, 222, 128, 0.26);
+  color: inherit;
 }
 </style>

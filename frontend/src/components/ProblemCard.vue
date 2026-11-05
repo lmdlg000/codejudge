@@ -39,7 +39,7 @@ const subline = computed(() => {
         <li class="tag tag--mode">{{ modeShort(p.contest_type) }}</li>
         <li class="tag tag--num">{{ p.score != null ? p.score : 100 }}分</li>
         <li class="tag tag--num">{{ p.time_limit_ms }}ms</li>
-        <li class="tag">用例数 {{ p.test_count }}</li>
+        <li v-if="p.test_count != null" class="tag">用例数 {{ p.test_count }}</li>
       </ul>
       <span class="pcard__cta">去做 {{ p.id }}</span>
     </div>

@@ -6,6 +6,7 @@
  */
 import { ref, onMounted, onBeforeUnmount, watch } from 'vue'
 import { highlightCode, langFromFilename } from '../utils/hljs.js'
+import { captureEditableState, rehighlightEditable } from '../utils/editable.js'
 
 const props = defineProps({
   modelValue: { type: String, default: '' },
@@ -33,62 +34,12 @@ function getHighlightedHtml(text) {
   return highlightCode(text, lang) || escapeHtml(text)
 }
 
-/** 纯文本 → 光标偏移量 */
-function getTextOffset(root, node, offset) {
-  let textOffset = 0
-  const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, null)
-  let current
-  while ((current = walker.nextNode())) {
-    if (current === node) return textOffset + offset
-    textOffset += current.textContent.length
-  }
-  return textOffset
-}
-
-/** 光标偏移量 → Range（用于恢复光标） */
-function setTextOffset(root, targetOffset) {
-  const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, null)
-  let current
-  let offset = 0
-  while ((current = walker.nextNode())) {
-    const len = current.textContent.length
-    if (offset + len >= targetOffset) {
-      const r = document.createRange()
-      r.setStart(current, Math.min(targetOffset - offset, len))
-      r.collapse(true)
-      return r
-    }
-    offset += len
-  }
-  return null
-}
-
-/** 重新高亮并恢复光标 */
+/** 重新高亮并原样恢复选区（含非折叠选区）与滚动位置 */
 function rehighlight() {
   if (!area.value) return
-  const selection = window.getSelection()
-  let textOffset = 0
-  let hasCursor = false
-
-  if (selection && selection.rangeCount > 0) {
-    const range = selection.getRangeAt(0)
-    if (area.value.contains(range.startContainer)) {
-      textOffset = getTextOffset(area.value, range.startContainer, range.startOffset)
-      hasCursor = true
-    }
-  }
-
-  const text = area.value.textContent || ''
+  const state = captureEditableState(area.value)
   isInternalUpdate = true
-  area.value.innerHTML = getHighlightedHtml(text)
-
-  if (hasCursor) {
-    const newRange = setTextOffset(area.value, textOffset)
-    if (newRange) {
-      selection.removeAllRanges()
-      selection.addRange(newRange)
-    }
-  }
+  rehighlightEditable(area.value, getHighlightedHtml(area.value.textContent || ''), state)
   isInternalUpdate = false
 }
 
@@ -134,7 +85,7 @@ function onFile(e) {
 watch(() => props.modelValue, (val) => {
   if (area.value && area.value.textContent !== val) {
     isInternalUpdate = true
-    area.value.innerHTML = getHighlightedHtml(val)
+    rehighlightEditable(area.value, getHighlightedHtml(val), captureEditableState(area.value))
     isInternalUpdate = false
   }
 })
@@ -172,7 +123,7 @@ onBeforeUnmount(() => {
     </div>
     <div
       ref="area"
-      class="editor__code"
+      class="editor__code editor__hl"
       :contenteditable="!readonly"
       :style="{ minHeight }"
       role="textbox"
@@ -241,7 +192,8 @@ onBeforeUnmount(() => {
   padding: var(--space-3) var(--space-4);
   font-family: var(--font-mono);
   font-size: var(--text-mono-code);
-  line-height: var(--lh-mono-code);
+  /* 整数行高：13px × 1.65 = 21.45px 会得到半像素行盒，长文件里累积成"选中块与文字错半行" */
+  line-height: 21px;
   letter-spacing: normal;
   tab-size: 4;
   white-space: pre;
@@ -254,6 +206,15 @@ onBeforeUnmount(() => {
   caret-color: var(--code-accent);
   outline: none;
   overflow: auto;
+}
+
+/* 选区：半透明底色 + 继承文字色。
+   只改背景不改文字色，浏览器不会把字刷成高对比色，选中时 token 颜色仍看得清；
+   底色留 26% 透明度，避免实心块压住字形（"选中就盖掉字"）。 */
+.editor__code::selection,
+.editor__code ::selection {
+  background: rgba(74, 222, 128, 0.26);
+  color: inherit;
 }
 
 @media (max-width: 1279px) {
