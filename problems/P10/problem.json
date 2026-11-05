@@ -2,7 +2,7 @@
   "id": "P10",
   "title": "最短路计数",
   "topic": "搜索/图论/动态规划",
-  "difficulty": "提高",
+  "difficulty": "困难",
   "contest_type": "oi",
   "build": {
     "command": "make",

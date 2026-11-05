@@ -2,7 +2,7 @@
   "id": "P9",
   "title": "区间规划器",
   "topic": "枚举/排序/二分/贪心",
-  "difficulty": "进阶",
+  "difficulty": "中等",
   "contest_type": "oi",
   "build": {
     "command": "make",

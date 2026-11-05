@@ -54,7 +54,7 @@ def main() -> int:
     ok_fields = all(set(item) == set(PROBLEM_SUMMARY_FIELDS) for item in j["items"])
     check("ProblemSummary 字段逐名一致", ok_fields, str(j["items"][0] if j["items"] else j))
     p1 = next(i for i in j["items"] if i["id"] == "P1")
-    check("P1 topic/difficulty 非空（G2 增补）", p1["topic"] == "分支/分段计费" and p1["difficulty"] == "入门", str(p1))
+    check("P1 topic/difficulty 非空（G2 增补）", p1["topic"] == "分支/分段计费" and p1["difficulty"] == "简单", str(p1))
     check("P3 acm/1500ms、P5 acm/2000ms",
           next(i for i in j["items"] if i["id"] == "P3")["contest_type"] == "acm"
           and next(i for i in j["items"] if i["id"] == "P3")["time_limit_ms"] == 1500

@@ -12,7 +12,7 @@ const props = defineProps({
 
 const buildLabel = computed(() => {
   const b = props.problem.build || {}
-  if (b.mode === 'make') return 'make inspector'
+  if (b.mode === 'make') return b.target ? `make ${b.target}` : 'make'
   // g++ 展示命令里的关键旗标，无命令时兜底
   const cmd = b.command || 'g++ -O2 -std=c++17'
   return cmd.replace(/\s*-o\s+\{bin\}\s*\{src\}/, '').trim() || 'g++'

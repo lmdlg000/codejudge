@@ -88,6 +88,7 @@ def problem_detail(problem: Problem) -> dict:
             "command": build.get("command", ""),
             "src": build.get("src"),
             "default_filename": problem.default_filename,
+            "target": build.get("target"),
         },
         "statement_md": statement_md,
         "samples": samples,

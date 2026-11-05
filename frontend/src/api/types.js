@@ -29,7 +29,7 @@
  * @property {number} score
  * @property {'exact'|'trim'} compare_mode
  * @property {{time_ms:number, memory_mb:number}} limits
- * @property {{mode:'g++'|'make', command:string, src:string|null, default_filename:string|null}} build
+ * @property {{mode:'g++'|'make', command:string, src:string|null, default_filename:string|null, target:string|null}} build
  * @property {string} statement_md
  * @property {{input:string, output:string}[]} samples
  * @property {number} test_count

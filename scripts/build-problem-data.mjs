@@ -85,7 +85,8 @@ if (existsSync(problemsDir)) {
         mode,
         command: build.command || (mode === 'make' ? 'make' : 'g++'),
         src: build.src || null,
-        default_filename: defaultFilenameOf(build, mode)
+        default_filename: defaultFilenameOf(build, mode),
+        target: build.target || null
       },
       topic: meta.topic || null,
       difficulty: meta.difficulty || null,

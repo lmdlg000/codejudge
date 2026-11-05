@@ -2,7 +2,7 @@
   "id": "P5",
   "title": "最短路径",
   "topic": "图论/最短路",
-  "difficulty": "较难",
+  "difficulty": "困难",
   "contest_type": "acm",
   "build": {
     "command": "g++ -O2 -std=c++17 -o {bin} {src}",

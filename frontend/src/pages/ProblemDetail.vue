@@ -221,7 +221,19 @@ const ctaHint = computed(() => {
   return ''
 })
 
-/** 限制摘要构建串（P6 显示 make inspector） */
+/** 本题 make 目标名（来自 problem.build.target，如 inspector / freeslot） */
+const makeTarget = computed(() => {
+  const b = problem.value && problem.value.build
+  return (b && b.target) || ''
+})
+
+/** make 题提交提示：目标名来自题目配置，不写死某一道题 */
+const makeHint = computed(() => {
+  const target = makeTarget.value || '<target>'
+  return `请在下方多文件模式提交 Makefile 与全部源文件，判题时执行 make ${target} 构建。`
+})
+
+/** 限制摘要构建串（make 题显示目标名） */
 const contestTypeLabel = computed(() =>
   problem.value ? modeShort(problem.value.contest_type) : ''
 )
@@ -579,7 +591,7 @@ function onErrAction() {
               v-if="isMake"
               tone="info"
               title="本题为多文件 make 构建"
-              message="请在下方多文件模式提交 Makefile 与全部源文件（如 Makefile + inspector.cpp + util.h），判题时执行 make <target> 构建。"
+              :message="makeHint"
             />
 
             <!-- 提交形态切换（g++ 题：单文件 / 多文件；make 题强制多文件）—— AppTabs 统一组件 -->

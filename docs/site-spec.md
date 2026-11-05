@@ -57,7 +57,7 @@
 
 | # | 功能 | 所属页面 | 优先级 | 验收标准 |
 |---|---|---|---|---|
-| F1 | 题目列表 | `/` | P0 | 6 题卡片含 标题/计分模式/满分/时限/用例数，**并显示题型 topic/难度 difficulty（字段为 null 时优雅降级不渲染该标签）**；点卡片进 `/problems/:pid`；加载与空态有文案 |
+| F1 | 题目列表 | `/` | P0 | 行式卡片含 标题/计分模式/满分/时限/用例数，**并显示题型 topic/难度 difficulty（字段为 null 时优雅降级不渲染该标签）**；点卡片进 `/problems/:pid`；加载与空态有文案；**题量超过一页时底部出现分页条**（每页 8 题，页码写进 `?page=`，单页时不渲染） |
 | F2 | 题面渲染 | `/problems/:pid` | P0 | statement.md 完整渲染（标题/列表/代码块）；样例输入输出块可辨识；限制摘要一行可见 |
 | F3 | 代码编辑与提交 | `/problems/:pid` | P0 | 等宽编辑区；空代码时提交按钮禁用；提交中按钮进入 loading 且文案「判题中…」不可重复点击 |
 | F4 | 结果页主呈现 | `/submissions/:sid` | P0 | 顶部得分横幅严格为 `通过 {passed}/{total} · 通过率 {rate}% · 得分 {score}/{max_score}`；逐用例表格列 = 用例/判定/耗时/权重/提示；判定以彩色徽章区分 |
@@ -128,7 +128,7 @@
 | memory_limit_mb | number | 内存限制（limits.memory_mb） |
 | build_mode | string | `"g++"` \| `"make"` |
 | topic | string \| null | 题型（如「分支/分段计费」），来源 problem.json 可选键 `topic`；缺省 null |
-| difficulty | string \| null | 难度（如「入门/简单/中等/较难」），来源 problem.json 可选键 `difficulty`；缺省 null |
+| difficulty | string \| null | 难度（三档：`简单` / `中等` / `困难`），来源 problem.json 可选键 `difficulty`；缺省 null |
 
 **ProblemDetail**（详情）
 
@@ -140,7 +140,7 @@
 | score | number | 满分 |
 | compare_mode | string | `"exact"` \| `"trim"` |
 | limits | object | `{ "time_ms": number, "memory_mb": number }` |
-| build | object | `{ "mode": "g++"\|"make", "command": string, "src": string\|null, "default_filename": string\|null }` |
+| build | object | `{ "mode": "g++"\|"make", "command": string, "src": string\|null, "default_filename": string\|null, "target": string\|null }`（`target` 为 make 题的目标名，如 `inspector` / `freeslot`；g++ 题为 null） |
 | statement_md | string | 题面 Markdown 原文 |
 | samples | array | `[{ "input": string, "output": string }]`，按题面出现顺序 |
 | test_count | number | 用例数 |
@@ -433,9 +433,9 @@ problems/<pid>/
 | score | number | 选填 | 满分，缺省 100 |
 | compare_mode | string | 选填 | `"exact"` \| `"trim"`，缺省 `"trim"`（末尾多余换行无害） |
 | topic | string | 选填 | 题型标签（如「分支/分段计费」），API `ProblemSummary.topic`；缺省 null 不渲染 |
-| difficulty | string | 选填 | 难度（如「入门/简单/中等/较难」），API `ProblemSummary.difficulty`；缺省 null 不渲染 |
+| difficulty | string | 选填 | 难度（三档：`简单` / `中等` / `困难`），API `ProblemSummary.difficulty`；缺省 null 不渲染 |
 
-P1–P6 的 `topic`/`difficulty` 取值以 `docs/content-plan.md` 题面清单为准（当前基线：P1 分支/分段计费·入门；P2 字符串处理·简单；P3 排序/贪心·中等；P4 日期模拟·中等；P5 图论/最短路·较难；P6 拓扑排序/环检测·中等）。
+`difficulty` 只允许三档：`简单` / `中等` / `困难`（G3 精简，原九档已废弃）。P1–P14 的 `topic`/`difficulty` 取值以 `docs/content-plan.md` 与 `problems/<id>/problem.json` 为准（当前基线：P1 分支/分段计费·简单；P2 字符串处理·简单；P3 排序/贪心·中等；P4 日期模拟·中等；P5 图论/最短路·困难；P6 拓扑排序/环检测·中等；P8 模拟·简单；P9 区间/二分·中等；P10 图论/DP·困难；P11 综合建模·困难；P12 二维模拟·简单；P13 区间运算·中等；P14 编码/栈·困难）。
 
 ### 9.3 tests 发现规则
 

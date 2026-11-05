@@ -1,6 +1,6 @@
 # CodeJudge 在线代码评测台
 
-基于 `requirements.md` 实现的本地在线评测（Online Judge）工具站：**真实判题引擎**（编译 → 限时运行 → 比对 → 计分）+ Web 界面（**终端风格**）。内置 P1–P6 六道题、45 组测试用例，支持 ACM/OI 双计分模式与 AC/PE/WA/TLE/RE/CE/SE 七种判定，判题在本机执行、数据不出机。
+基于 `requirements.md` 实现的本地在线评测（Online Judge）工具站：**真实判题引擎**（编译 → 限时运行 → 比对 → 计分）+ Web 界面（**终端风格**）。内置 P1–P14 十四道题、89 组测试用例（难度只分 `简单` / `中等` / `困难` 三档），支持 ACM/OI 双计分模式与 AC/PE/WA/TLE/RE/CE/SE 七种判定，判题在本机执行、数据不出机。
 
 **提交形态**：单文件源码提交 + **多源码文件上传提交评测**（可一次上传 Makefile / 多个 .cpp/.h，整套构建判题；P6 依赖检查器即 make 多文件题）。
 
@@ -60,7 +60,7 @@ python judge.py init P7 --type oi             # 新题骨架
 
 | 路由 | 用途 |
 |---|---|
-| `/` | 题目列表（P1–P6） |
+| `/` | 题目列表（P1–P14） |
 | `/problems/:pid` | 题面 + 在线写代码（单文件 / **多文件上传**）+ 提交判题 |
 | `/submissions/:sid` | 判题结果（得分横幅 + 逐用例表格 + CE/RE 面板 + 源码回显） |
 | `/submissions` | 提交历史（倒序，可按题目筛选） |
@@ -159,7 +159,7 @@ codejudge/
 ├── core/               # 判题引擎九模块（problem/builder/runner/comparator/scorer/…）
 ├── backend/            # FastAPI 服务（7 个 /api 接口，契约见 docs/site-spec.md）
 ├── frontend/           # Vue 3 + Vite 前端（npm run build → dist/）
-├── problems/P1–P6/     # 题库（problem.json + statement.md + tests/ + reference/）
+├── problems/P1–P14/    # 题库（problem.json + statement.md + tests/ + reference/）
 ├── examples/           # 六条判定路径演示提交（P1_ac/wa/pe/tle/re/ce + P1_make/）
 ├── exercise/           # 题面 Markdown 源（import-samples 输入）
 ├── reports/            # 判题报告 JSON（即提交历史存储）
@@ -169,7 +169,7 @@ codejudge/
 
 ## 养护与更新说明
 
-**新增题目**：`python judge.py init P7 --type oi` 建骨架 → 写 `statement.md`（样例块用 `## 样例输入` / `## 样例输出` + 代码围栏，importer 可解析）→ 手放 `tests/*.in/.out` → `python judge.py gen P7 --ref reference/P7.cpp` 校验/刷新期望输出。`problem.json` 可选 `topic` / `difficulty` 键（首页卡片显示）。
+**新增题目**：`python judge.py init P7 --type oi` 建骨架 → 写 `statement.md`（样例块用 `## 样例输入` / `## 样例输出` + 代码围栏，importer 可解析）→ 手放 `tests/*.in/.out` → `python judge.py gen P7 --ref reference/P7.cpp` 校验/刷新期望输出。`problem.json` 可选 `topic` / `difficulty` 键（首页卡片显示）。**`difficulty` 只允许三档**：`简单` / `中等` / `困难`，不要再写「入门/基础/进阶/较难/提高/综合」等旧档位（映射规则见 `docs/content-plan.md` Δ2）。
 
 **新增用例**（三条路径等价，都落 `tests/`）：① 手放 `42.in` + `42.out`（可加 `42.json` 覆盖 weight/time_ms/note）；② `gen` 批量刷新；③ `import-samples` 从题面抽取。
 
@@ -199,7 +199,7 @@ codejudge/
 | 文档 | 内容 |
 |---|---|
 | `docs/site-spec.md` | 站点规格卡与接口契约（唯一事实来源） |
-| `docs/content-plan.md` | 逐页文案、SEO、P1–P6 题面 |
+| `docs/content-plan.md` | 逐页文案、SEO、P1–P6 题面、Δ2 增补（P12–P14 与难度三档） |
 | `docs/design-spec.md` | 设计规范与 tokens.css |
 | `docs/prelaunch-checklist.md` | G3 上线前检查表（74 PASS / 0 FAIL / 5 N-A） |
 | `docs/e2e-verify-notes.md` | 集成验证记录 |
