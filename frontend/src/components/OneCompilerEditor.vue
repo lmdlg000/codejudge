@@ -6,13 +6,17 @@
  *   iframe→父：onmessage，e.data 为代码对象 { language, files, stdin, result? }（codeChangeEvent）
  * 能力：代码变更回传（提交载荷来源）、逐样例注入 stdin 并触发运行、等待运行结果（best-effort）。
  */
-import { ref, onMounted, onBeforeUnmount, watch } from 'vue'
+import { computed, ref, onMounted, onBeforeUnmount, watch } from 'vue'
 
 const props = defineProps({
   /** 初始代码（单文件） */
   modelValue: { type: String, default: '' },
   /** 高度 */
   height: { type: String, default: '520px' },
+  /** 语言：cpp（默认）| c —— 决定 embed 地址与注入时的 language 字段 */
+  language: { type: String, default: 'cpp' },
+  /** 注入的文件名：C++ 题 main.cpp，C 题 main.c */
+  fileName: { type: String, default: 'main.cpp' },
   disabled: { type: Boolean, default: false }
 })
 
@@ -21,10 +25,13 @@ const emit = defineEmits(['update:modelValue'])
 const frameEl = ref(null)
 const ready = ref(false)
 
-const EMBED_SRC =
-  'https://onecompiler.com/embed/cpp' +
-  '?codeChangeEvent=true&listenToEvents=true&theme=dark' +
-  '&hideLanguageSelection=true&hideTitle=true&hideNew=true'
+/** embed 地址：语言由题目决定（C 题用 /embed/c，否则 /embed/cpp） */
+const embedSrc = computed(
+  () =>
+    `https://onecompiler.com/embed/${props.language}` +
+    '?codeChangeEvent=true&listenToEvents=true&theme=dark' +
+    '&hideLanguageSelection=true&hideTitle=true&hideNew=true'
+)
 
 /** 等待一次带 result 的回传（triggerRun 后） */
 let pendingResolve = null
@@ -48,8 +55,8 @@ function post(obj) {
 function populate(code, stdin) {
   return post({
     eventType: 'populateCode',
-    language: 'cpp',
-    files: [{ name: 'main.cpp', content: code ?? props.modelValue }],
+    language: props.language,
+    files: [{ name: props.fileName, content: code ?? props.modelValue }],
     stdin: stdin ?? ''
   })
 }
@@ -139,13 +146,13 @@ onBeforeUnmount(() => {
 <template>
   <div class="oc-editor" :style="{ '--oc-h': height }">
     <div class="oc-editor__bar">
-      <span class="mono-data oc-editor__title">$ onecompiler editor · cpp</span>
+      <span class="mono-data oc-editor__title">$ onecompiler editor · {{ language }}</span>
       <span class="caption oc-editor__hint">改动代码自动回传；「测此样例」注入输入并触发运行</span>
     </div>
     <iframe
       ref="frameEl"
       class="oc-editor__frame"
-      :src="EMBED_SRC"
+      :src="embedSrc"
       title="OneCompiler 嵌入式编辑器"
       allow="clipboard-write"
     ></iframe>

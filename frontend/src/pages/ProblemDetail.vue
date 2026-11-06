@@ -37,8 +37,8 @@ const router = useRouter()
 
 const { problem, loading, error, load } = useProblem()
 
-/** 编辑器内容（P0 预填 main 骨架） */
-const SKELETON = `#include <bits/stdc++.h>
+/** 编辑器内容（P0 预填 main 骨架）：C 题与 C++ 题各一套，按题目的编译方式选 */
+const SKELETON_CPP = `#include <bits/stdc++.h>
 using namespace std;
 
 int main() {
@@ -46,7 +46,25 @@ int main() {
     return 0;
 }
 `
-const code = ref(SKELETON)
+const SKELETON_C = `#include <stdio.h>
+
+int main() {
+    // 在这里写你的代码
+    return 0;
+}
+`
+
+/** 这道题是不是 C 语言题（判据：src 以 .c 结尾，或构建命令是 gcc） */
+function isCProblem(p) {
+  const b = p && p.build
+  return !!b && ((b.src || '').toLowerCase().endsWith('.c') || /(^|\s)gcc(\s|$)/.test(b.command || ''))
+}
+
+/** 题目用 gcc/C11 编译时给 C 骨架，否则给 C++ 骨架 */
+function skeletonFor(p) {
+  return isCProblem(p) ? SKELETON_C : SKELETON_CPP
+}
+const code = ref(SKELETON_CPP)
 const filename = ref('main.cpp')
 
 /**
@@ -63,7 +81,7 @@ function persistDraft() {
       mode: submitMode.value,
       code: code.value,
       files: multiFiles.value,
-      skeleton: SKELETON
+      skeleton: skeletonFor(problem.value)
     })
   }, 400)
 }
@@ -474,6 +492,8 @@ async function init() {
   if (problem.value) {
     applyTdk(problemTdk(problem.value))
     filename.value = resolveFilename()
+    // C 题给 stdio 骨架、C++ 题给 bits/stdc++.h 骨架；下面若恢复出草稿会覆盖它
+    code.value = skeletonFor(problem.value)
     // make 题强制多文件；g++ 题默认单文件
     submitMode.value = isMake.value ? 'multi' : 'single'
     // 恢复上次源码（编辑草稿 localStorage / 提交暂存 sessionStorage，后者兼容旧路径）。
@@ -500,7 +520,7 @@ async function init() {
 onMounted(init)
 watch(() => route.params.pid, (nv, ov) => {
   if (route.name === 'problem-detail' && nv && nv !== ov) {
-    code.value = SKELETON
+    code.value = SKELETON_CPP
     multiFiles.value = []
     submitMode.value = 'single'
     modeChoice.value = 'default'
@@ -574,9 +594,9 @@ function onErrAction() {
           <aside class="detail__right" aria-label="代码提交">
             <TagBar :problem="problem" />
 
-            <!-- 语言说明行（固定） -->
+            <!-- 语言说明行（按题目的构建方式切换） -->
             <p class="lang-line caption">
-              语言：<span class="inline-code">C++17（g++ -O2）</span>
+              语言：<span class="inline-code">{{ isCProblem(problem) ? 'C11（gcc -O2）' : 'C++17（g++ -O2）' }}</span>
             </p>
 
             <!-- 提交错误提示条（编辑区上方） -->
@@ -614,6 +634,8 @@ function onErrAction() {
                 v-else-if="needsSampleGate"
                 ref="ocEditorRef"
                 v-model="code"
+                :language="isCProblem(problem) ? 'c' : 'cpp'"
+                :file-name="filename"
                 height="520px"
               />
               <CodeEditor

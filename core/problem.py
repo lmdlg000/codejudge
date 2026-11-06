@@ -70,6 +70,15 @@ class Problem:
         return "make" if self.build.get("target") or self.build.get("command") == "make" else "g++"
 
     @property
+    def build_label(self) -> str:
+        """构建方式的展示名：make 题显示 make，单文件题显示编译器名（g++ / gcc）。
+        build_mode 只有 g++/make 两种「构建路径」，这里额外区分 C 与 C++ 用的编译器。"""
+        if self.build_mode == "make":
+            return "make"
+        cmd = (self.build.get("command") or "g++").split()
+        return cmd[0] if cmd else "g++"
+
+    @property
     def default_filename(self) -> str | None:
         """单文件提交的默认文件名（make 题无单文件默认名）。"""
         if self.build_mode == "make":

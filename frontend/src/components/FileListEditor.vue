@@ -5,7 +5,7 @@
  * （字母数字 _ . -，1–64 字符）；内容以文本读入（源码提交）。
  * 编辑区为 contenteditable pre + 语法高亮（单层，选中天然对齐）。
  */
-import { computed, ref, onMounted, onBeforeUnmount, watch, nextTick } from 'vue'
+import { computed, ref, onBeforeUnmount, watch } from 'vue'
 import { highlightCode, langFromFilename } from '../utils/hljs.js'
 import { captureEditableState, rehighlightEditable } from '../utils/editable.js'
 
@@ -83,31 +83,43 @@ function onCompositionEnd() {
   onInput()
 }
 
-// 切换文件时更新编辑器内容（换文件不保留上一个文件的选区）
-watch(activeFile, (f) => {
-  if (area.value && f) {
-    isInternalUpdate = true
-    rehighlightEditable(area.value, getHighlightedHtml(f.content, f.name), null)
-    area.value.scrollTop = 0
-    area.value.scrollLeft = 0
-    isInternalUpdate = false
-  }
-})
+/** 把某个文件的内容画进编辑区（换文件时重置滚动，不保留上一个文件的选区） */
+function renderActive(f) {
+  if (!area.value || !f) return
+  isInternalUpdate = true
+  rehighlightEditable(area.value, getHighlightedHtml(f.content, f.name), null)
+  area.value.scrollTop = 0
+  area.value.scrollLeft = 0
+  isInternalUpdate = false
+}
 
-onMounted(() => {
-  if (area.value && activeFile.value) {
-    area.value.innerHTML = getHighlightedHtml(activeFile.value.content, activeFile.value.name)
-    area.value.addEventListener('compositionstart', onCompositionStart)
-    area.value.addEventListener('compositionend', onCompositionEnd)
-  }
-})
+// 只盯「文件名」：盯 activeFile 对象的话，每次输入都会生成新对象 → 回调重写 innerHTML → 光标被打断。
+// flush:'post' 等 DOM 更新完再画：第一次打开时编辑区是 v-if 新建的，pre-flush 阶段 area 还是 null。
+watch(
+  () => (activeFile.value ? activeFile.value.name : ''),
+  (name) => {
+    if (name) renderActive(activeFile.value)
+  },
+  { flush: 'post', immediate: true }
+)
+
+// 文件从父级进来（上传 / 载入示例 / 恢复草稿）时，自动选中第一个可用文件，
+// 避免"列表里有文件、编辑区却不显示内容"。
+watch(
+  () => props.modelValue.map((f) => f.name).join('\n'),
+  () => {
+    const list = props.modelValue
+    if (!list.length) {
+      activeName.value = ''
+      return
+    }
+    if (!list.some((f) => f.name === activeName.value)) activeName.value = list[0].name
+  },
+  { immediate: true }
+)
 
 onBeforeUnmount(() => {
   clearTimeout(rehighlightTimer)
-  if (area.value) {
-    area.value.removeEventListener('compositionstart', onCompositionStart)
-    area.value.removeEventListener('compositionend', onCompositionEnd)
-  }
 })
 
 function setNotice(text) {
@@ -268,6 +280,8 @@ function fileSize(content) {
           @input="onInput"
           @keydown="onKeydown"
           @paste="onPaste"
+          @compositionstart="onCompositionStart"
+          @compositionend="onCompositionEnd"
         ></div>
       </div>
     </div>
@@ -451,10 +465,4 @@ function fileSize(content) {
   min-height: var(--editor-min, 280px);
 }
 
-/* 选区：半透明底色 + 继承文字色（详见 CodeEditor.vue 同名注释） */
-.mfile__code::selection,
-.mfile__code ::selection {
-  background: rgba(74, 222, 128, 0.26);
-  color: inherit;
-}
 </style>

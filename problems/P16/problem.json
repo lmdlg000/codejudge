@@ -1,0 +1,17 @@
+{
+  "id": "P16",
+  "title": "机柜状态",
+  "topic": "位运算/前缀和/多组输入",
+  "difficulty": "中等",
+  "contest_type": "oi",
+  "build": {
+    "command": "gcc -O2 -std=c11 -o {bin} {src}",
+    "src": "main.c"
+  },
+  "limits": {
+    "time_ms": 2000,
+    "memory_mb": 256
+  },
+  "score": 100,
+  "compare_mode": "trim"
+}

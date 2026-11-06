@@ -253,7 +253,7 @@ def cmd_list(args) -> int:
             continue
         print(f"{problem.id}  {problem.title}  [{problem.contest_type}]  "
               f"满分 {problem.score:g}  时限 {problem.default_time_ms}ms  "
-              f"用例 {len(problem.tests)}  构建 {problem.build_mode}")
+              f"用例 {len(problem.tests)}  构建 {problem.build_label}")
         if args.pid:  # 明确指定 pid 时展开用例
             for case in problem.tests:
                 tl = case.time_limit_ms or problem.default_time_ms

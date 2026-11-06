@@ -1,0 +1,17 @@
+{
+  "id": "P15",
+  "title": "成绩单排版",
+  "topic": "格式化输出/数组统计/字符串",
+  "difficulty": "简单",
+  "contest_type": "oi",
+  "build": {
+    "command": "gcc -O2 -std=c11 -o {bin} {src}",
+    "src": "main.c"
+  },
+  "limits": {
+    "time_ms": 1000,
+    "memory_mb": 256
+  },
+  "score": 100,
+  "compare_mode": "trim"
+}

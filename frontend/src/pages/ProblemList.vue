@@ -3,7 +3,7 @@
  * 页面 1：题目列表（首页 `/`）。
  * 红线：工具本体首屏，零营销区块。H1 + 一行引言 + 行式卡片列表 + 分页 + 页脚。
  * 文案逐字取 content-plan 页面 1。
- * 分页：题量增长后列表会拉很长，按 PAGE_SIZE 分页，页码写进 `?page=`，
+ * 分页：题量增长后列表会拉很长，按 PAGE_SIZE（每页 10 题）分页，页码写进 `?page=`，
  * 刷新/分享/前进后退都能回到同一页；只有一页时不渲染页码条。
  */
 import { computed, onMounted, ref, watch } from 'vue'
@@ -14,7 +14,7 @@ import EmptyState from '../components/EmptyState.vue'
 import { useProblems } from '../composables/useProblems.js'
 import { applyTdk, TDK_HOME, PROBLEM_RANGE_LABEL } from '../utils/tdk.js'
 
-const PAGE_SIZE = 8
+const PAGE_SIZE = 10
 
 const route = useRoute()
 const router = useRouter()

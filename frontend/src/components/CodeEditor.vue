@@ -112,11 +112,11 @@ onBeforeUnmount(() => {
     <div class="editor__bar">
       <span class="editor__filename mono-data">{{ filename }}</span>
       <label class="editor__upload">
-        上传 .cpp 文件
+        上传代码文件
         <input
           class="sr-only"
           type="file"
-          accept=".cpp,.cc,.cxx,.h,.hpp,text/plain"
+          accept=".c,.cpp,.cc,.cxx,.h,.hpp,.txt,text/plain"
           @change="onFile"
         />
       </label>
@@ -208,14 +208,6 @@ onBeforeUnmount(() => {
   overflow: auto;
 }
 
-/* 选区：半透明底色 + 继承文字色。
-   只改背景不改文字色，浏览器不会把字刷成高对比色，选中时 token 颜色仍看得清；
-   底色留 26% 透明度，避免实心块压住字形（"选中就盖掉字"）。 */
-.editor__code::selection,
-.editor__code ::selection {
-  background: rgba(74, 222, 128, 0.26);
-  color: inherit;
-}
 
 @media (max-width: 1279px) {
   .editor {

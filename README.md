@@ -1,6 +1,6 @@
 # CodeJudge 在线代码评测台
 
-基于 `requirements.md` 实现的本地在线评测（Online Judge）工具站：**真实判题引擎**（编译 → 限时运行 → 比对 → 计分）+ Web 界面（**终端风格**）。内置 P1–P14 十四道题、89 组测试用例（难度只分 `简单` / `中等` / `困难` 三档），支持 ACM/OI 双计分模式与 AC/PE/WA/TLE/RE/CE/SE 七种判定，判题在本机执行、数据不出机。
+基于 `requirements.md` 实现的本地在线评测（Online Judge）工具站：**真实判题引擎**（编译 → 限时运行 → 比对 → 计分）+ Web 界面（**终端风格**）。内置 P1–P16 十六道题、105 组测试用例（难度只分 `简单` / `中等` / `困难` 三档），支持 ACM/OI 双计分模式与 AC/PE/WA/TLE/RE/CE/SE 七种判定，判题在本机执行、数据不出机。
 
 **提交形态**：单文件源码提交 + **多源码文件上传提交评测**（可一次上传 Makefile / 多个 .cpp/.h，整套构建判题；P6 依赖检查器即 make 多文件题）。
 
@@ -60,7 +60,7 @@ python judge.py init P7 --type oi             # 新题骨架
 
 | 路由 | 用途 |
 |---|---|
-| `/` | 题目列表（P1–P14） |
+| `/` | 题目列表（P1–P16，每页 10 题） |
 | `/problems/:pid` | 题面 + 在线写代码（单文件 / **多文件上传**）+ 提交判题 |
 | `/submissions/:sid` | 判题结果（得分横幅 + 逐用例表格 + CE/RE 面板 + 源码回显） |
 | `/submissions` | 提交历史（倒序，可按题目筛选） |
@@ -159,7 +159,7 @@ codejudge/
 ├── core/               # 判题引擎九模块（problem/builder/runner/comparator/scorer/…）
 ├── backend/            # FastAPI 服务（7 个 /api 接口，契约见 docs/site-spec.md）
 ├── frontend/           # Vue 3 + Vite 前端（npm run build → dist/）
-├── problems/P1–P14/    # 题库（problem.json + statement.md + tests/ + reference/）
+├── problems/P1–P16/    # 题库（problem.json + statement.md + tests/ + reference/）
 ├── examples/           # 六条判定路径演示提交（P1_ac/wa/pe/tle/re/ce + P1_make/）
 ├── exercise/           # 题面 Markdown 源（import-samples 输入）
 ├── reports/            # 判题报告 JSON（即提交历史存储）

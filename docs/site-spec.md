@@ -435,7 +435,7 @@ problems/<pid>/
 | topic | string | 选填 | 题型标签（如「分支/分段计费」），API `ProblemSummary.topic`；缺省 null 不渲染 |
 | difficulty | string | 选填 | 难度（三档：`简单` / `中等` / `困难`），API `ProblemSummary.difficulty`；缺省 null 不渲染 |
 
-`difficulty` 只允许三档：`简单` / `中等` / `困难`（G3 精简，原九档已废弃）。P1–P14 的 `topic`/`difficulty` 取值以 `docs/content-plan.md` 与 `problems/<id>/problem.json` 为准（当前基线：P1 分支/分段计费·简单；P2 字符串处理·简单；P3 排序/贪心·中等；P4 日期模拟·中等；P5 图论/最短路·困难；P6 拓扑排序/环检测·中等；P8 模拟·简单；P9 区间/二分·中等；P10 图论/DP·困难；P11 综合建模·困难；P12 二维模拟·简单；P13 区间运算·中等；P14 编码/栈·困难）。
+`difficulty` 只允许三档：`简单` / `中等` / `困难`（G3 精简，原九档已废弃）。P1–P16 的 `topic`/`difficulty` 取值以 `docs/content-plan.md` 与 `problems/<id>/problem.json` 为准（当前基线：P1 分支/分段计费·简单；P2 字符串处理·简单；P3 排序/贪心·中等；P4 日期模拟·中等；P5 图论/最短路·困难；P6 拓扑排序/环检测·中等；P8 模拟·简单；P9 区间/二分·中等；P10 图论/DP·困难；P11 综合建模·困难；P12 二维模拟·简单；P13 区间运算·中等；P14 编码/栈·困难；P15 格式化输出·简单；P16 位运算/前缀和·中等）。
 
 ### 9.3 tests 发现规则
 
