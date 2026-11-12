@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import copy
 import json
+import os
 import sys
 import threading
 import time
@@ -43,14 +44,17 @@ def main() -> int:
     j = r.json()
     check("GET /api/health 200", r.status_code == 200, str(r.status_code))
     check("health 字段齐全", set(j) == {"status", "engine", "version", "problem_count", "supabase_configured"}, str(j))
-    check("health.engine=ready problem_count=6", j.get("engine") == "ready" and j.get("problem_count") == 6, str(j))
+    check("health.engine=ready", j.get("engine") == "ready", str(j))
+    health_count = j.get("problem_count")
     check("health.supabase_configured=false（未配置基线）", j.get("supabase_configured") is False, str(j))
 
     # 2. problems 列表
     r = c.get("/api/problems")
     j = r.json()
     check("GET /api/problems 200", r.status_code == 200)
-    check("problems total=6", j.get("total") == 6, str(j.get("total")))
+    disk_count = len([d for d in os.listdir("problems") if os.path.isfile(os.path.join("problems", d, "problem.json"))])
+    check("problems total 与 problems/ 目录一致", j.get("total") == disk_count, f"{j.get('total')} vs {disk_count}")
+    check("health.problem_count 与列表一致", health_count == j.get("total"), f"{health_count} vs {j.get('total')}")
     ok_fields = all(set(item) == set(PROBLEM_SUMMARY_FIELDS) for item in j["items"])
     check("ProblemSummary 字段逐名一致", ok_fields, str(j["items"][0] if j["items"] else j))
     p1 = next(i for i in j["items"] if i["id"] == "P1")
@@ -73,9 +77,9 @@ def main() -> int:
           j["build"]["mode"] == "g++" and j["build"]["default_filename"] == "main.cpp", str(j["build"]))
 
     # 4. 404 PROBLEM_NOT_FOUND
-    r = c.get("/api/problems/P9")
+    r = c.get("/api/problems/P99")
     e = err_of(r)
-    check("GET /api/problems/P9 → 404 PROBLEM_NOT_FOUND", r.status_code == 404 and e.get("code") == "PROBLEM_NOT_FOUND", str((r.status_code, e)))
+    check("GET /api/problems/P99（不存在）→ 404 PROBLEM_NOT_FOUND", r.status_code == 404 and e.get("code") == "PROBLEM_NOT_FOUND", str((r.status_code, e)))
 
     # 5. 提交判题（AC 全过）
     src_ac = open("examples/P1_ac.cpp", encoding="utf-8").read()
@@ -149,8 +153,13 @@ def main() -> int:
     check("file_label 已持久化", all("file_label" in it and it["file_label"] for it in j["items"]), str(j["items"][0]))
     times = [it["created_at"] for it in j["items"]]
     check("历史倒序（新→旧）", times == sorted(times, reverse=True), str(times[:3]))
-    r = c.get("/api/submissions", params={"problem_id": "P2"})
-    check("problem_id 过滤 total=0", r.json()["total"] == 0, str(r.json()))
+    r = c.get("/api/submissions", params={"problem_id": "P1"})
+    _f = r.json()
+    check("problem_id 过滤只返回该题",
+          all(i["problem_id"] == "P1" for i in _f["items"]) and _f["total"] >= len(_f["items"]),
+          str(_f)[:200])
+    r = c.get("/api/submissions", params={"problem_id": "P99"})
+    check("problem_id 过滤到无提交的题 → total=0", r.json()["total"] == 0, str(r.json())[:120])
     r = c.get("/api/submissions", params={"limit": 2})
     check("limit 生效（items≤2）", len(r.json()["items"]) <= 2)
     r = c.get("/api/submissions", params={"limit": 0})
@@ -177,8 +186,8 @@ def main() -> int:
           and expects.get("P1_ce.cpp") == "CE" and expects.get("P1_make/") == "make", str(expects))
     r = c.get("/api/examples")
     check("examples 缺 problem_id → 400", r.status_code == 400 and err_of(r).get("code") == "VALIDATION_ERROR")
-    r = c.get("/api/examples", params={"problem_id": "P9"})
-    check("examples 未知题 → 404", r.status_code == 404)
+    r = c.get("/api/examples", params={"problem_id": "P99"})
+    check("examples 未知题 → 404", r.status_code == 404, str(r.status_code))
 
     # 16. 并发 429 JUDGE_BUSY
     results = {}
