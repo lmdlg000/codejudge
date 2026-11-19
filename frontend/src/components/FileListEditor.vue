@@ -7,7 +7,7 @@
  */
 import { computed, ref, onBeforeUnmount, watch } from 'vue'
 import { highlightCode, langFromFilename } from '../utils/hljs.js'
-import { captureEditableState, rehighlightEditable } from '../utils/editable.js'
+import { captureEditableState, rehighlightEditable, getEditableText, insertPlainText } from '../utils/editable.js'
 
 const props = defineProps({
   /** @type {{name:string, content:string}[]} */
@@ -53,28 +53,39 @@ function rehighlight() {
   if (!area.value || !activeFile.value) return
   const state = captureEditableState(area.value)
   isInternalUpdate = true
-  rehighlightEditable(area.value, getHighlightedHtml(area.value.textContent || '', activeFile.value.name), state)
+  rehighlightEditable(area.value, getHighlightedHtml(getEditableText(area.value), activeFile.value.name), state)
   isInternalUpdate = false
 }
 
 function onInput() {
   if (isComposing || isInternalUpdate || !area.value) return
-  updateContent(area.value.textContent || '')
+  const text = getEditableText(area.value)
+  // 浏览器若插入了 <br>/块级换行（拖拽、输入法等），立刻规范化成文本节点换行，
+  // 否则 textContent 视角的选区偏移会和纯文本模型错位。
+  if (text !== area.value.textContent) {
+    const state = captureEditableState(area.value)
+    isInternalUpdate = true
+    rehighlightEditable(area.value, getHighlightedHtml(text, activeFile.value.name), state)
+    isInternalUpdate = false
+  }
+  updateContent(text)
   clearTimeout(rehighlightTimer)
   rehighlightTimer = setTimeout(rehighlight, 350)
 }
 
 function onKeydown(e) {
-  if (e.key === 'Tab') {
+  if (e.key === 'Tab' || e.key === 'Enter') {
     e.preventDefault()
-    document.execCommand('insertText', false, '    ')
+    insertPlainText(area.value, e.key === 'Tab' ? '    ' : '\n')
+    onInput()
   }
 }
 
 function onPaste(e) {
   e.preventDefault()
   const text = (e.clipboardData || window.clipboardData).getData('text/plain')
-  document.execCommand('insertText', false, text)
+  insertPlainText(area.value, text)
+  onInput()
 }
 
 function onCompositionStart() { isComposing = true }
