@@ -1,21 +1,24 @@
-// P32 猴子分桃 —— 情境拓展（趣味数学 4.8.1）
-// n 只猴子依次分一堆桃子：每只来了都把当前桃子平均分成 n 份，多出 1 个，扔掉后拿走自己那份；
-// n 只都这样做完后，剩下的桃子恰好能被 n 整除。求桃子总数最少是多少。
-// 输入 n（2<=n<=9），输出最小正整数解。
+// P34 百钱百鸡 —— 情境拓展（趣味数学 4.2.1 百钱百鸡问题）
+// 公鸡每只 5 钱、母鸡每只 3 钱、小鸡三只 1 钱。
+// 输入总钱数 m 与总只数 n，输出所有购买方案（公鸡x、母鸡y、小鸡z），
+// 第一行方案数，之后每行 x y z，按 x 从小到大、x 相同按 y 从小到大排列。
 #include <stdio.h>
 int main(void) {
-    int n;
-    if (scanf("%d", &n) != 1) return 0;
-    if (n <= 1) { printf("1\n"); return 0; }
-    // 从「最后剩下的桃子」反推：它是 n 的倍数 n*k；每只猴子前一步 = 余数/(n-1)*n + 1
-    for (long long k = 1; ; ++k) {
-        long long x = n * k;
-        int ok = 1;
-        for (int i = 0; i < n; ++i) {
-            if (x % (n - 1) != 0) { ok = 0; break; }
-            x = x / (n - 1) * n + 1;
+    int m, n;
+    if (scanf("%d %d", &m, &n) != 2) return 0;
+    int sol[1000][3], cnt = 0;
+    for (int x = 0; x <= n && x * 5 <= m; ++x) {
+        for (int y = 0; x + y <= n && x * 5 + y * 3 <= m; ++y) {
+            int z = n - x - y;
+            if (z % 3 != 0) continue;
+            if (x * 5 + y * 3 + z / 3 == m) {
+                sol[cnt][0] = x; sol[cnt][1] = y; sol[cnt][2] = z;
+                ++cnt;
+            }
         }
-        if (ok) { printf("%lld\n", x); return 0; }
     }
+    printf("%d\n", cnt);
+    for (int i = 0; i < cnt; ++i)
+        printf("%d %d %d\n", sol[i][0], sol[i][1], sol[i][2]);
     return 0;
 }

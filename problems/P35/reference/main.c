@@ -1,16 +1,26 @@
-// P35 韩信点兵 —— 情境拓展（趣味数学 4.1 韩信点兵）
-// 已知某数除以 3 余 a、除以 5 余 b、除以 7 余 c，求满足条件的最小正整数。
-// 输入 a b c（0<=a<3, 0<=b<5, 0<=c<7），输出最小正整数解（1..105）。
+// P37 螺旋方阵 —— 情境拓展（趣味数学 8.x 数形结合·螺旋填数）
+// 输入 n(1<=n<=20)，把 1..n*n 按顺时针螺旋填入 n 阶方阵（从左上角向右开始），
+// 逐行输出，元素间一个空格。
 #include <stdio.h>
 int main(void) {
-    int a, b, c;
-    if (scanf("%d %d %d", &a, &b, &c) != 3) return 0;
-    for (int x = 1; x <= 105; ++x) {
-        if (x % 3 == a && x % 5 == b && x % 7 == c) {
-            printf("%d\n", x);
-            return 0;
-        }
+    int n;
+    if (scanf("%d", &n) != 1) return 0;
+    int a[20][20] = {0};
+    int top = 0, bottom = n - 1, left = 0, right = n - 1, v = 1;
+    while (top <= bottom && left <= right) {
+        for (int j = left; j <= right; ++j) a[top][j] = v++;
+        ++top;
+        for (int i = top; i <= bottom; ++i) a[i][right] = v++;
+        --right;
+        if (top <= bottom) { for (int j = right; j >= left; --j) a[bottom][j] = v++; --bottom; }
+        if (left <= right) { for (int i = bottom; i >= top; --i) a[i][left] = v++; ++left; }
     }
-    printf("0\n");
+    for (int i = 0; i < n; ++i) {
+        for (int j = 0; j < n; ++j) {
+            if (j) putchar(' ');
+            printf("%d", a[i][j]);
+        }
+        putchar('\n');
+    }
     return 0;
 }

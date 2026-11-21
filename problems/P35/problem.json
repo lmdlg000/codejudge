@@ -1,10 +1,10 @@
 {
   "id": "P35",
-  "title": "韩信点兵",
-  "topic": "数论/同余枚举",
+  "title": "螺旋方阵",
+  "topic": "二维数组/模拟",
   "difficulty": "中等",
   "language": "C",
-  "contest_type": "acm",
+  "contest_type": "oi",
   "build": {
     "command": "gcc -O2 -std=c11 -o {bin} {src}",
     "src": "main.c"

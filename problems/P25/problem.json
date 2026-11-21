@@ -1,10 +1,10 @@
 {
   "id": "P25",
-  "title": "日期比较",
-  "topic": "结构体/多分支",
-  "difficulty": "中等",
+  "title": "水仙花数",
+  "topic": "数位分离/枚举",
+  "difficulty": "简单",
   "language": "C",
-  "contest_type": "acm",
+  "contest_type": "oi",
   "build": {
     "command": "gcc -O2 -std=c11 -o {bin} {src}",
     "src": "main.c"

@@ -1,8 +1,8 @@
 {
   "id": "P27",
-  "title": "水仙花数",
-  "topic": "数位分离/枚举",
-  "difficulty": "简单",
+  "title": "回文素数",
+  "topic": "数论/字符串",
+  "difficulty": "中等",
   "language": "C",
   "contest_type": "oi",
   "build": {

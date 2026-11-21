@@ -1,13 +1,13 @@
 {
   "id": "P34",
-  "title": "百钱百鸡",
-  "topic": "方程枚举/不定方程",
-  "difficulty": "中等",
-  "language": "C",
-  "contest_type": "acm",
+  "title": "迷宫最短通道",
+  "topic": "BFS/最短路",
+  "difficulty": "困难",
+  "language": "C++",
+  "contest_type": "oi",
   "build": {
-    "command": "gcc -O2 -std=c11 -o {bin} {src}",
-    "src": "main.c"
+    "command": "g++ -O2 -std=c++17 -o {bin} {src}",
+    "src": "main.cpp"
   },
   "limits": {
     "time_ms": 1000,

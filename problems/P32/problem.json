@@ -1,7 +1,7 @@
 {
   "id": "P32",
-  "title": "猴子分桃",
-  "topic": "枚举/整除",
+  "title": "百钱百鸡",
+  "topic": "方程枚举/不定方程",
   "difficulty": "中等",
   "language": "C",
   "contest_type": "acm",
@@ -10,7 +10,7 @@
     "src": "main.c"
   },
   "limits": {
-    "time_ms": 2000,
+    "time_ms": 1000,
     "memory_mb": 256
   },
   "score": 100,

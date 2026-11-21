@@ -1,7 +1,7 @@
 {
   "id": "P36",
-  "title": "迷宫最短通道",
-  "topic": "BFS/最短路",
+  "title": "数字三角形取最大和",
+  "topic": "动态规划/递推",
   "difficulty": "困难",
   "language": "C++",
   "contest_type": "oi",

@@ -1,8 +1,8 @@
 {
   "id": "P28",
-  "title": "完数判定",
-  "topic": "因数/枚举",
-  "difficulty": "简单",
+  "title": "勾股数计数",
+  "topic": "枚举/勾股定理",
+  "difficulty": "中等",
   "language": "C",
   "contest_type": "acm",
   "build": {

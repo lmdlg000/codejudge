@@ -1,16 +1,16 @@
 {
   "id": "P33",
-  "title": "哥德巴赫配对",
-  "topic": "数论/筛法/双指针",
+  "title": "韩信点兵",
+  "topic": "数论/同余枚举",
   "difficulty": "中等",
-  "language": "C++",
+  "language": "C",
   "contest_type": "acm",
   "build": {
-    "command": "g++ -O2 -std=c++17 -o {bin} {src}",
-    "src": "main.cpp"
+    "command": "gcc -O2 -std=c11 -o {bin} {src}",
+    "src": "main.c"
   },
   "limits": {
-    "time_ms": 2000,
+    "time_ms": 1000,
     "memory_mb": 256
   },
   "score": 100,

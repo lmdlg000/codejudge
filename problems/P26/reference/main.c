@@ -1,16 +1,18 @@
-// P26 对称方阵 —— 参考实现（改编自 C 题库 2022 秋完善题二维数组图案）
-// 输入 n（1<=n<=20），输出 n 行 n 列方阵：两条对角线上为 1，其余为 0，元素间一个空格。
+// P28 完数判定 —— 情境拓展（趣味数学 1.5.1）
+// 输入正整数 n（1<=n<=1e8），若 n 等于其所有真因子（含 1，不含自身）之和输出 YES，否则 NO。
 #include <stdio.h>
 int main(void) {
-    int n;
-    if (scanf("%d", &n) != 1) return 0;
-    for (int i = 0; i < n; ++i) {
-        for (int j = 0; j < n; ++j) {
-            int v = (i == j || i + j == n - 1) ? 1 : 0;
-            if (j) putchar(' ');
-            printf("%d", v);
+    long long n;
+    if (scanf("%lld", &n) != 1) return 0;
+    if (n <= 1) { printf("NO\n"); return 0; }
+    long long sum = 1;
+    for (long long d = 2; d * d <= n; ++d) {
+        if (n % d == 0) {
+            sum += d;
+            long long other = n / d;
+            if (other != d) sum += other;
         }
-        putchar('\n');
     }
+    printf("%s\n", sum == n ? "YES" : "NO");
     return 0;
 }

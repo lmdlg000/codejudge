@@ -1,16 +1,16 @@
 {
   "id": "P31",
-  "title": "卡普雷卡尔操作",
-  "topic": "数位分离/模拟",
+  "title": "哥德巴赫配对",
+  "topic": "数论/筛法/双指针",
   "difficulty": "中等",
-  "language": "C",
+  "language": "C++",
   "contest_type": "acm",
   "build": {
-    "command": "gcc -O2 -std=c11 -o {bin} {src}",
-    "src": "main.c"
+    "command": "g++ -O2 -std=c++17 -o {bin} {src}",
+    "src": "main.cpp"
   },
   "limits": {
-    "time_ms": 1000,
+    "time_ms": 2000,
     "memory_mb": 256
   },
   "score": 100,

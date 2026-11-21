@@ -1,18 +1,18 @@
-// P28 完数判定 —— 情境拓展（趣味数学 1.5.1）
-// 输入正整数 n（1<=n<=1e8），若 n 等于其所有真因子（含 1，不含自身）之和输出 YES，否则 NO。
+// P30 勾股数计数 —— 情境拓展（趣味数学 1.4.1）
+// 输入 n（1<=n<=500），统计满足 1<=a<b<c<=n 且 a*a+b*b==c*c 的整数三元组个数。
 #include <stdio.h>
 int main(void) {
-    long long n;
-    if (scanf("%lld", &n) != 1) return 0;
-    if (n <= 1) { printf("NO\n"); return 0; }
-    long long sum = 1;
-    for (long long d = 2; d * d <= n; ++d) {
-        if (n % d == 0) {
-            sum += d;
-            long long other = n / d;
-            if (other != d) sum += other;
+    int n;
+    if (scanf("%d", &n) != 1) return 0;
+    int cnt = 0;
+    for (int a = 1; a <= n; ++a) {
+        for (int b = a + 1; b <= n; ++b) {
+            long long s = (long long)a*a + (long long)b*b;
+            long long c = 1;
+            while (c * c < s) ++c;
+            if (c * c == s && c <= n) ++cnt;
         }
     }
-    printf("%s\n", sum == n ? "YES" : "NO");
+    printf("%d\n", cnt);
     return 0;
 }

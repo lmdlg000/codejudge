@@ -1,7 +1,7 @@
 {
   "id": "P30",
-  "title": "勾股数计数",
-  "topic": "枚举/勾股定理",
+  "title": "猴子分桃",
+  "topic": "枚举/整除",
   "difficulty": "中等",
   "language": "C",
   "contest_type": "acm",

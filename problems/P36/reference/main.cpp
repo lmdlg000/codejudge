@@ -1,36 +1,20 @@
-// P36 迷宫最短通道 —— 情境拓展（趣味数学 7.8 迷宫最短通道）
-// 输入 n m 与 n 行迷宫：'.' 空地、'#' 墙、'S' 起点、'T' 终点。
-// 每步可上下左右移动一格，输出从 S 到 T 的最少步数；不可达输出 -1。
+// P38 数字三角形取最大和 —— 情境拓展（趣味数学 5.3 巧妙建模）
+// 输入 n，接下来 n 行第 i 行有 i 个整数，构成数字三角形。
+// 从顶到底每次只能向左下或右下走一步，求路径上数字之和的最大值。
 #include <bits/stdc++.h>
 using namespace std;
 int main() {
-    int n, m;
-    if (!(cin >> n >> m)) return 0;
-    vector<string> g(n);
-    int sr = -1, sc = -1, tr = -1, tc = -1;
-    for (int i = 0; i < n; ++i) {
-        cin >> g[i];
-        for (int j = 0; j < m; ++j) {
-            if (g[i][j] == 'S') { sr = i; sc = j; }
-            if (g[i][j] == 'T') { tr = i; tc = j; }
-        }
+    int n;
+    if (!(cin >> n)) return 0;
+    vector<vector<long long>> a(n + 1);
+    for (int i = 1; i <= n; ++i) {
+        a[i].resize(i + 1);
+        for (int j = 1; j <= i; ++j) cin >> a[i][j];
     }
-    vector<vector<int>> dist(n, vector<int>(m, -1));
-    queue<pair<int,int>> q;
-    dist[sr][sc] = 0;
-    q.push({sr, sc});
-    int dr[4] = {1, -1, 0, 0}, dc[4] = {0, 0, 1, -1};
-    while (!q.empty()) {
-        auto [r, c] = q.front(); q.pop();
-        if (r == tr && c == tc) break;
-        for (int k = 0; k < 4; ++k) {
-            int nr = r + dr[k], nc = c + dc[k];
-            if (nr < 0 || nr >= n || nc < 0 || nc >= m) continue;
-            if (g[nr][nc] == '#' || dist[nr][nc] != -1) continue;
-            dist[nr][nc] = dist[r][c] + 1;
-            q.push({nr, nc});
-        }
-    }
-    cout << dist[tr][tc] << '\n';
+    vector<long long> dp(n + 2, 0);
+    for (int i = n; i >= 1; --i)
+        for (int j = 1; j <= i; ++j)
+            dp[j] = a[i][j] + max(dp[j], dp[j + 1]);
+    cout << dp[1] << '\n';
     return 0;
 }
