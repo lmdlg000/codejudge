@@ -54,8 +54,9 @@ int main() {
 }
 `
 
-/** 这道题是不是 C 语言题（判据：src 以 .c 结尾，或构建命令是 gcc） */
+/** 这道题是不是 C 语言题（优先看显式 language 标注；否则按 src 后缀 / gcc 构建推断） */
 function isCProblem(p) {
+  if (p && p.language) return String(p.language).toUpperCase() === 'C'
   const b = p && p.build
   return !!b && ((b.src || '').toLowerCase().endsWith('.c') || /(^|\s)gcc(\s|$)/.test(b.command || ''))
 }
@@ -306,7 +307,9 @@ function fillExample() {
 function buildPayload() {
   const payload = {
     problem_id: pid.value,
-    language: 'cpp'
+    // UAPI 执行语言：C 题走 c，其余（含 make 多文件 C++ 工程）走 cpp。
+    // 与题面语言标注、默认文件名（main.c/main.cpp）保持一致。
+    language: isCProblem(problem.value) ? 'c' : 'cpp'
   }
   if (submitMode.value === 'multi') {
     payload.files = multiFiles.value.map((f) => ({ name: f.name, content: f.content }))
