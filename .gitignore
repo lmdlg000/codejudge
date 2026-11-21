@@ -12,6 +12,7 @@ frontend/.env.*
 # 运行时产物
 reports/
 *.log
+supabase/.temp/
 
 # Python
 __pycache__/
