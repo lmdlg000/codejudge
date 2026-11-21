@@ -4,7 +4,7 @@
   "topic": "数论/试除法",
   "difficulty": "简单",
   "language": "C++",
-  "contest_type": "oi",
+  "contest_type": "acm",
   "build": {
     "command": "g++ -O2 -std=c++17 -o {bin} {src}",
     "src": "main.cpp"

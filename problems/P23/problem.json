@@ -4,7 +4,7 @@
   "topic": "数组/遍历",
   "difficulty": "简单",
   "language": "C",
-  "contest_type": "oi",
+  "contest_type": "acm",
   "build": {
     "command": "gcc -O2 -std=c11 -o {bin} {src}",
     "src": "main.c"
