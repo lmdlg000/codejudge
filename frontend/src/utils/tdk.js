@@ -21,8 +21,8 @@ export const PROBLEM_RANGE_LABEL = rangeLabel(problems) || `${PROBLEM_COUNT} 道
 
 const RANGE_TEXT = rangeLabel(problems) ? `${PROBLEM_RANGE_LABEL} 题库` : `${PROBLEM_COUNT} 道题题库`
 const DESC_SCALE = rangeLabel(problems)
-  ? `内置 ${PROBLEM_RANGE_LABEL} 共 ${PROBLEM_COUNT} 道 C++ 题`
-  : `内置 ${PROBLEM_COUNT} 道 C++ 题`
+  ? `内置 ${PROBLEM_RANGE_LABEL} 共 ${PROBLEM_COUNT} 道 C/C++ 题`
+  : `内置 ${PROBLEM_COUNT} 道 C/C++ 题`
 
 /** 默认（首页） */
 export const TDK_HOME = {
@@ -81,7 +81,7 @@ export function problemTdk(p) {
   const intent = firstSentence(p.statement_md)
   return {
     title: `${p.title} · 在线提交判题 | ${SITE}`,
-    description: `${p.title}（${p.id}）题面与在线提交：${intent}。时限 ${p.limits.time_ms}ms，${p.contest_type === 'oi' ? 'OI' : 'ACM'} 模式，满分 ${p.score}。贴上 C++ 代码立即出逐用例判定与差异提示。`
+    description: `${p.title}（${p.id}）题面与在线提交：${intent}。时限 ${p.limits.time_ms}ms，${p.contest_type === 'oi' ? 'OI' : 'ACM'} 模式，满分 ${p.score}。贴上 ${p.language === 'C' ? 'C' : 'C++'} 代码立即出逐用例判定与差异提示。`
   }
 }
 

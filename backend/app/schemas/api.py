@@ -31,6 +31,7 @@ class ProblemSummary(BaseModel):
     time_limit_ms: int
     memory_limit_mb: int
     build_mode: Literal["g++", "make"]
+    language: str = "C++"  # "C" | "C++"，题目列表标注语言类型
     topic: Optional[str] = None
     difficulty: Optional[str] = None
 
@@ -57,6 +58,7 @@ class ProblemDetail(BaseModel):
     title: str
     contest_type: ModeT
     score: float
+    language: str = "C++"  # "C" | "C++"
     compare_mode: Literal["exact", "trim"]
     limits: Limits
     build: BuildInfo

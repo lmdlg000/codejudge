@@ -20,6 +20,7 @@ function fromBundled() {
       time_limit_ms: p.limits && p.limits.time_ms,
       memory_limit_mb: p.limits && p.limits.memory_mb,
       build_mode: p.build && p.build.mode,
+      language: p.language,
       topic: p.topic,
       difficulty: p.difficulty
     })),

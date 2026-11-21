@@ -3,6 +3,7 @@
  * 行式题目卡片（design-spec 5.2）。
  * 整卡可点（<a> 保键盘可达）+ 右侧固定 CTA。
  * 信息位：题号+标题 → 题型·难度（topic/difficulty 可选，缺失不渲染）→ 标签组 → CTA。
+ * 语言类型（language: C / C++）在标签组首位高亮标注；老题缺失时按 build_mode 兜底为 C++。
  */
 import { computed } from 'vue'
 import { modeShort } from '../utils/format.js'
@@ -19,6 +20,15 @@ const subline = computed(() => {
   if (p.difficulty) bits.push(p.difficulty)
   return bits.join(' · ')
 })
+
+// 语言标签：C / C++；缺失时按 build_mode 兜底（make/g++ 视为 C++）
+const languageLabel = computed(() => {
+  const lang = (p.language || '').toUpperCase()
+  if (lang === 'C') return 'C'
+  if (lang === 'C++' || lang === 'CPP') return 'C++'
+  return 'C++'
+})
+const isC = computed(() => languageLabel.value === 'C')
 </script>
 
 <template>
@@ -36,6 +46,7 @@ const subline = computed(() => {
 
     <div class="pcard__aside">
       <ul class="pcard__tags" aria-label="题目信息">
+        <li class="tag tag--lang" :class="isC ? 'tag--lang-c' : 'tag--lang-cpp'">{{ languageLabel }}</li>
         <li class="tag tag--mode">{{ modeShort(p.contest_type) }}</li>
         <li class="tag tag--num">{{ p.score != null ? p.score : 100 }}分</li>
         <li class="tag tag--num">{{ p.time_limit_ms }}ms</li>
@@ -149,6 +160,26 @@ const subline = computed(() => {
   font-family: var(--font-mono);
   font-size: var(--text-mono-badge);
   font-weight: 700;
+}
+
+/* 语言类型徽标：C（蓝）与 C++（紫）区分，始终排在标签组首位 */
+.tag--lang {
+  font-family: var(--font-mono);
+  font-size: var(--text-mono-badge);
+  font-weight: 700;
+  border: 1px solid transparent;
+}
+
+.tag--lang-cpp {
+  background: rgba(139, 92, 246, 0.14);
+  color: #a78bfa;
+  border-color: rgba(139, 92, 246, 0.35);
+}
+
+.tag--lang-c {
+  background: rgba(56, 189, 248, 0.14);
+  color: #38bdf8;
+  border-color: rgba(56, 189, 248, 0.35);
 }
 
 .pcard__cta {

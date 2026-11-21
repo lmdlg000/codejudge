@@ -1,0 +1,18 @@
+{
+  "id": "P28",
+  "title": "完数判定",
+  "topic": "因数/枚举",
+  "difficulty": "简单",
+  "language": "C",
+  "contest_type": "oi",
+  "build": {
+    "command": "gcc -O2 -std=c11 -o {bin} {src}",
+    "src": "main.c"
+  },
+  "limits": {
+    "time_ms": 2000,
+    "memory_mb": 256
+  },
+  "score": 100,
+  "compare_mode": "trim"
+}

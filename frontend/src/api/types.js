@@ -17,6 +17,7 @@
  * @property {number} time_limit_ms 单用例时限
  * @property {number} memory_limit_mb 内存限制
  * @property {'g++'|'make'} build_mode 构建方式
+ * @property {'C'|'C++'} [language]  语言类型（可选，缺省按 build 推断）
  * @property {string} [topic]       题型（可选）
  * @property {string} [difficulty]  难度（可选）
  */
@@ -33,6 +34,7 @@
  * @property {string} statement_md
  * @property {{input:string, output:string}[]} samples
  * @property {number} test_count
+ * @property {'C'|'C++'} [language]
  * @property {string} [topic]
  * @property {string} [difficulty]
  */

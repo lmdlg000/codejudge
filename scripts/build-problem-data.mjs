@@ -51,6 +51,14 @@ function defaultFilenameOf(build, mode) {
   return (build && build.src) || 'main.cpp'
 }
 
+// 语言类型：problem.json 显式 language 优先；老题按 build 推断（gcc/.c → C，其余 → C++）
+function languageOf(meta) {
+  if (meta.language === 'C' || meta.language === 'C++') return meta.language
+  const cmd = String((meta.build && meta.build.command) || '')
+  const src = String((meta.build && meta.build.src) || '')
+  return /(^|\s)gcc(\s|$)/.test(cmd) || /\.c$/i.test(src) ? 'C' : 'C++'
+}
+
 const items = []
 // 题号数值排序：P<n> 按数字升序（P2 < P10），非标准 id 排最后（与 core.problem.problem_id_key 同口径）
 function idOrder(a, b) {
@@ -90,6 +98,7 @@ if (existsSync(problemsDir)) {
       },
       topic: meta.topic || null,
       difficulty: meta.difficulty || null,
+      language: languageOf(meta),
       statement_md: statement,
       samples: extractSamples(statement),
       test_count: null // 静态包不数用例；列表卡缺省不渲染该格

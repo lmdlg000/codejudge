@@ -21,8 +21,10 @@ const buildLabel = computed(() => {
 const tags = computed(() => {
   const p = props.problem
   const limits = p.limits || {}
+  const lang = (p.language || '').toUpperCase() === 'C' ? 'C' : 'C++'
   return [
     { key: '题号', value: p.id, mono: true },
+    { key: '语言', value: lang, accent: true },
     { key: '模式', value: modeShort(p.contest_type), accent: true },
     { key: '时限', value: `${limits.time_ms != null ? limits.time_ms : 1000}ms`, mono: true },
     { key: '内存', value: `${limits.memory_mb != null ? limits.memory_mb : 256}MB`, mono: true },

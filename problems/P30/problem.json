@@ -1,0 +1,18 @@
+{
+  "id": "P30",
+  "title": "勾股数计数",
+  "topic": "枚举/勾股定理",
+  "difficulty": "中等",
+  "language": "C",
+  "contest_type": "oi",
+  "build": {
+    "command": "gcc -O2 -std=c11 -o {bin} {src}",
+    "src": "main.c"
+  },
+  "limits": {
+    "time_ms": 2000,
+    "memory_mb": 256
+  },
+  "score": 100,
+  "compare_mode": "trim"
+}

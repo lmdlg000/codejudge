@@ -36,6 +36,16 @@ def problem_id_key(name: str) -> tuple:
     return (1, 0, name)
 
 
+def infer_language(build: dict) -> str:
+    """老题 problem.json 无 language 字段时，按 build 推断语言类型。
+    gcc / .c 源 → C；其余（g++ / make 多文件工程）→ C++。"""
+    cmd = str(build.get("command") or "")
+    src = str(build.get("src") or "")
+    if re.search(r"(^|\s)gcc(\s|$)", cmd) or src.lower().endswith(".c"):
+        return "C"
+    return "C++"
+
+
 @dataclass
 class TestCase:
     name: str
@@ -63,6 +73,7 @@ class Problem:
     compare_mode: str = "trim"  # "exact" | "trim"
     topic: str | None = None
     difficulty: str | None = None
+    language: str = "C++"  # "C" | "C++"，题目列表标注语言类型；老题按 build 推断
 
     # ---- 派生属性 ----
     @property
@@ -124,6 +135,7 @@ class Problem:
             compare_mode=meta.get("compare_mode", "trim"),
             topic=meta.get("topic"),
             difficulty=meta.get("difficulty"),
+            language=meta.get("language") or infer_language(meta.get("build") or {}),
         )
         if problem.compare_mode not in ("exact", "trim"):
             raise ProblemError(f"题目数据没读出来：{pid} compare_mode 必须是 exact|trim")

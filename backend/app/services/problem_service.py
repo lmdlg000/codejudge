@@ -62,6 +62,7 @@ def problem_summary(problem: Problem) -> dict:
         "time_limit_ms": problem.default_time_ms,
         "memory_limit_mb": problem.default_memory_mb,
         "build_mode": problem.build_mode,
+        "language": problem.language,
         "topic": problem.topic,
         "difficulty": problem.difficulty,
     }
@@ -78,6 +79,7 @@ def problem_detail(problem: Problem) -> dict:
         "title": problem.title,
         "contest_type": problem.contest_type,
         "score": problem.score,
+        "language": problem.language,
         "compare_mode": problem.compare_mode,
         "limits": {
             "time_ms": problem.default_time_ms,
