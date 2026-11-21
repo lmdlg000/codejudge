@@ -1,0 +1,18 @@
+{
+  "id": "P34",
+  "title": "百钱百鸡",
+  "topic": "方程枚举/不定方程",
+  "difficulty": "中等",
+  "language": "C",
+  "contest_type": "acm",
+  "build": {
+    "command": "gcc -O2 -std=c11 -o {bin} {src}",
+    "src": "main.c"
+  },
+  "limits": {
+    "time_ms": 1000,
+    "memory_mb": 256
+  },
+  "score": 100,
+  "compare_mode": "trim"
+}

@@ -858,72 +858,6 @@
     "test_count": null
   },
   {
-    "id": "P23",
-    "title": "数组极差",
-    "contest_type": "acm",
-    "score": 100,
-    "compare_mode": "trim",
-    "limits": {
-      "time_ms": 1000,
-      "memory_mb": 256
-    },
-    "build": {
-      "mode": "g++",
-      "command": "gcc -O2 -std=c11 -o {bin} {src}",
-      "src": "main.c",
-      "default_filename": "main.c",
-      "target": null
-    },
-    "topic": "数组/遍历",
-    "difficulty": "简单",
-    "language": "C",
-    "statement_md": "# P23 数组极差\r\n\r\n> 难度：简单 · 计分：ACM · **C 语言题**，单文件提交（main.c） · 构建：gcc -O2 -std=c11 · 时限 1000ms / 256MB\r\n> 题源：C 语言题库 2021 编程题改编。本题题面自包含，无需查阅原卷。\r\n\r\n## 题目背景\r\n\r\n极差是一组数据中最大值与最小值之差，用来粗略衡量数据的波动幅度，例如一天内气温的变化范围。\r\n\r\n给定 n 个整数，请输出它们的极差。\r\n\r\n## 输入格式\r\n\r\n第一行一个整数 n（1 ≤ n ≤ 1000）。\r\n第二行 n 个整数，用空格分隔。\r\n\r\n## 输出格式\r\n\r\n一行，一个整数，即最大值减去最小值的结果。\r\n\r\n## 样例输入\r\n\r\n```\r\n6\r\n1 3 5 10 7 4\r\n```\r\n\r\n## 样例输出\r\n\r\n```\r\n9\r\n```\r\n\r\n样例说明：最大值 10、最小值 1，极差 = 10 - 1 = 9。\r\n\r\n## 样例输入 2\r\n\r\n```\r\n4\r\n-2 -8 0 5\r\n```\r\n\r\n## 样例输出 2\r\n\r\n```\r\n13\r\n```\r\n\r\n样例说明：最大值 5、最小值 -8，极差 = 5 - (-8) = 13。\r\n\r\n## 数据范围\r\n\r\n- 1 ≤ n ≤ 1000\r\n- 每个整数在 32 位有符号整数范围内\r\n\r\n## 思路提示\r\n\r\n读入第一个数，同时把它作为最大值和最小值的初值；之后每读入一个数，分别更新最大值和最小值；最后输出两者之差。极差永远非负。\r\n\r\n## 常见错误\r\n\r\n1. 最大值和最小值用了不同的初值（如 0 和 10000），遇到相反符号的数据会算错。\r\n2. 只遍历了一次却漏掉第一个元素。\r\n3. n = 1 时极差应为 0，不要输出其他值。\r\n",
-    "samples": [
-      {
-        "input": "6\n1 3 5 10 7 4",
-        "output": "9"
-      },
-      {
-        "input": "4\n-2 -8 0 5",
-        "output": "13"
-      }
-    ],
-    "test_count": null
-  },
-  {
-    "id": "P24",
-    "title": "元素查找",
-    "contest_type": "acm",
-    "score": 100,
-    "compare_mode": "trim",
-    "limits": {
-      "time_ms": 1000,
-      "memory_mb": 256
-    },
-    "build": {
-      "mode": "g++",
-      "command": "gcc -O2 -std=c11 -o {bin} {src}",
-      "src": "main.c",
-      "default_filename": "main.c",
-      "target": null
-    },
-    "topic": "数组/查找",
-    "difficulty": "简单",
-    "language": "C",
-    "statement_md": "# P24 元素查找\r\n\r\n> 难度：简单 · 计分：ACM · **C 语言题**，单文件提交（main.c） · 构建：gcc -O2 -std=c11 · 时限 1000ms / 256MB\r\n> 题源：C 语言题库 2016 编程题改编。本题题面自包含，无需查阅原卷。\r\n\r\n## 题目背景\r\n\r\n判断某个编号或关键字是否存在于一批数据中，是查找操作的基本形式，例如检查某个学号是否在名单里。\r\n\r\n给定 n 个整数和一个目标值 x，请判断 x 是否出现在这 n 个数中。\r\n\r\n## 输入格式\r\n\r\n第一行一个整数 n（1 ≤ n ≤ 1000）。\r\n第二行 n 个整数，用空格分隔。\r\n第三行一个整数 x，表示要查找的目标值。\r\n\r\n## 输出格式\r\n\r\n一行：若 x 在数组中至少出现一次，输出 `found`；否则输出 `not found`。全部小写，不要输出引号或标点。\r\n\r\n## 样例输入\r\n\r\n```\r\n10\r\n15 9 7 11 7 21 7 9 3 12\r\n7\r\n```\r\n\r\n## 样例输出\r\n\r\n```\r\nfound\r\n```\r\n\r\n## 样例输入 2\r\n\r\n```\r\n5\r\n1 2 3 4 5\r\n99\r\n```\r\n\r\n## 样例输出 2\r\n\r\n```\r\nnot found\r\n```\r\n\r\n## 数据范围\r\n\r\n- 1 ≤ n ≤ 1000\r\n- 数组元素与目标值均在 32 位有符号整数范围内\r\n\r\n## 思路提示\r\n\r\n先把 n 个数存入数组，再读目标值，最后线性扫描一遍，遇到相等就置标志并提前结束。数组允许重复元素，找到任意一个即可。\r\n\r\n## 常见错误\r\n\r\n1. 边读数组边读目标值，导致目标值被当成数组元素。\r\n2. 输出 `Found` / `Not found` 等大小写不一致的字符串——判题按字符精确比对。\r\n3. 找到后仍继续扫描，虽然结果不变但浪费时间。\r\n",
-    "samples": [
-      {
-        "input": "10\n15 9 7 11 7 21 7 9 3 12\n7",
-        "output": "found"
-      },
-      {
-        "input": "5\n1 2 3 4 5\n99",
-        "output": "not found"
-      }
-    ],
-    "test_count": null
-  },
-  {
     "id": "P25",
     "title": "日期比较",
     "contest_type": "acm",
@@ -1203,6 +1137,208 @@
       {
         "input": "2",
         "output": "11"
+      }
+    ],
+    "test_count": null
+  },
+  {
+    "id": "P33",
+    "title": "哥德巴赫配对",
+    "contest_type": "acm",
+    "score": 100,
+    "compare_mode": "trim",
+    "limits": {
+      "time_ms": 2000,
+      "memory_mb": 256
+    },
+    "build": {
+      "mode": "g++",
+      "command": "g++ -O2 -std=c++17 -o {bin} {src}",
+      "src": "main.cpp",
+      "default_filename": "main.cpp",
+      "target": null
+    },
+    "topic": "数论/筛法/双指针",
+    "difficulty": "中等",
+    "language": "C++",
+    "statement_md": "# P33 哥德巴赫配对\r\n\r\n> 难度：中等 · 计分：ACM · **C++ 语言题**，单文件提交（main.cpp） · 构建：g++ -O2 -std=c++17 · 时限 2000ms / 256MB\r\n\r\n> 题源：情境拓展 ·《趣味数学及编程拓展》2.6.1 哥德巴赫猜想。本题题面自包含，无需查阅原卷。\r\n\r\n## 题目背景\r\n\r\n哥德巴赫猜想指出：任何大于 2 的偶数都可以写成两个素数之和。虽然猜想本身至今未被完全证明，但小范围内总能找到这样的素数对。给定一个偶数，请找出一对和为它的素数，并要求其中较小的那个素数尽可能小。\r\n\r\n## 输入格式\r\n\r\n一行，一个偶数 n（4 ≤ n ≤ 200000）。\r\n\r\n## 输出格式\r\n\r\n一行，两个素数 p 和 q（p ≤ q 且 p + q = n），p 取所有可行解中最小者，两数间一个空格；若无解输出 NO。\r\n\r\n## 样例输入\r\n\r\n```\r\n10\r\n```\r\n\r\n## 样例输出\r\n\r\n```\r\n3 7\r\n```\r\n\r\n## 样例输入 2\r\n\r\n```\r\n4\r\n```\r\n\r\n## 样例输出 2\r\n\r\n```\r\n2 2\r\n```\r\n\r\n## 样例输入 3\r\n\r\n```\r\n8\r\n```\r\n\r\n## 样例输出 3\r\n\r\n```\r\n3 5\r\n```\r\n\r\n## 数据范围\r\n\r\n- 4 ≤ n ≤ 200000，且 n 为偶数\r\n- 判题采用 trim 比对：忽略行末与整体首尾空白，行内空格敏感。\r\n\r\n## 思路提示\r\n\r\n先用埃氏筛求出 [2,n] 的素数表，再从 p=2 向 n/2 枚举，第一个满足 p 与 n-p 都是素数的 p 就是最小解。注意 n 为偶数，n-p 也为偶数时只有 p=2,n-p=2 一种特殊情况。\r\n\r\n## 常见错误\r\n\r\n1. 筛法从 i*i 开始标记，避免重复\r\n2. 必须 p<=q（枚举到 n/2 即可）\r\n3. 无解输出大写 NO\r\n",
+    "samples": [
+      {
+        "input": "10",
+        "output": "3 7"
+      },
+      {
+        "input": "4",
+        "output": "2 2"
+      },
+      {
+        "input": "8",
+        "output": "3 5"
+      }
+    ],
+    "test_count": null
+  },
+  {
+    "id": "P34",
+    "title": "百钱百鸡",
+    "contest_type": "acm",
+    "score": 100,
+    "compare_mode": "trim",
+    "limits": {
+      "time_ms": 1000,
+      "memory_mb": 256
+    },
+    "build": {
+      "mode": "g++",
+      "command": "gcc -O2 -std=c11 -o {bin} {src}",
+      "src": "main.c",
+      "default_filename": "main.c",
+      "target": null
+    },
+    "topic": "方程枚举/不定方程",
+    "difficulty": "中等",
+    "language": "C",
+    "statement_md": "# P34 百钱百鸡\r\n\r\n> 难度：中等 · 计分：ACM · **C 语言题**，单文件提交（main.c） · 构建：gcc -O2 -std=c11 · 时限 1000ms / 256MB\r\n\r\n> 题源：情境拓展 ·《趣味数学及编程拓展》4.2.1 百钱百鸡问题。本题题面自包含，无需查阅原卷。\r\n\r\n## 题目背景\r\n\r\n这是《孙子算经》流传下来的经典问题：用一百钱买一百只鸡，公鸡每只五钱、母鸡每只三钱、小鸡三只一钱，问公鸡、母鸡、小鸡各买多少只。把总钱数与总只数 generalize 后，请枚举出所有可能的购买方案。\r\n\r\n## 输入格式\r\n\r\n一行，两个整数 m 和 n，分别表示总钱数和总只数。\r\n\r\n## 输出格式\r\n\r\n第一行一个整数 k，表示方案数；接下来 k 行，每行三个整数 x y z，分别表示公鸡、母鸡、小鸡的只数，按 x 升序、x 相同按 y 升序排列。无解时只输出 0。\r\n\r\n## 样例输入\r\n\r\n```\r\n100 100\r\n```\r\n\r\n## 样例输出\r\n\r\n```\r\n4\r\n0 25 75\r\n4 18 78\r\n8 11 81\r\n12 4 84\r\n```\r\n\r\n## 样例输入 2\r\n\r\n```\r\n50 50\r\n```\r\n\r\n## 样例输出 2\r\n\r\n```\r\n2\r\n2 9 39\r\n6 2 42\r\n```\r\n\r\n## 数据范围\r\n\r\n- 0 ≤ m,n ≤ 1000，保证方案数不超过 1000\r\n- 判题采用 trim 比对：忽略行末与整体首尾空白，行内空格敏感。\r\n\r\n## 思路提示\r\n\r\n枚举公鸡 x 与母鸡 y，小鸡 z = n - x - y 由总只数确定；只要 z 能被 3 整除且总价等于 m 即为一组解。循环上界可用 x*5<=m 与 x+y<=n 提前剪枝。\r\n\r\n## 常见错误\r\n\r\n1. 小鸡必须三只一钱，z 需被 3 整除\r\n2. 输出顺序：方案数单独一行，再逐行 x y z\r\n3. 无解时只输出 0\r\n",
+    "samples": [
+      {
+        "input": "100 100",
+        "output": "4\n0 25 75\n4 18 78\n8 11 81\n12 4 84"
+      },
+      {
+        "input": "50 50",
+        "output": "2\n2 9 39\n6 2 42"
+      }
+    ],
+    "test_count": null
+  },
+  {
+    "id": "P35",
+    "title": "韩信点兵",
+    "contest_type": "acm",
+    "score": 100,
+    "compare_mode": "trim",
+    "limits": {
+      "time_ms": 1000,
+      "memory_mb": 256
+    },
+    "build": {
+      "mode": "g++",
+      "command": "gcc -O2 -std=c11 -o {bin} {src}",
+      "src": "main.c",
+      "default_filename": "main.c",
+      "target": null
+    },
+    "topic": "数论/同余枚举",
+    "difficulty": "中等",
+    "language": "C",
+    "statement_md": "# P35 韩信点兵\r\n\r\n> 难度：中等 · 计分：ACM · **C 语言题**，单文件提交（main.c） · 构建：gcc -O2 -std=c11 · 时限 1000ms / 256MB\r\n\r\n> 题源：情境拓展 ·《趣味数学及编程拓展》4.1 韩信点兵。本题题面自包含，无需查阅原卷。\r\n\r\n## 题目背景\r\n\r\n相传韩信点兵时，让士兵三人一组、五人一组、七人一组报数，只记每组余下的人数，就能推算出总人数。这就是著名的「中国剩余定理」雏形。已知某数分别除以 3、5、7 的余数，请反推出满足条件的最小正整数。\r\n\r\n## 输入格式\r\n\r\n一行，三个整数 a b c，分别表示除以 3、5、7 的余数。\r\n\r\n## 输出格式\r\n\r\n一行，一个整数，表示满足条件的最小正整数。\r\n\r\n## 样例输入\r\n\r\n```\r\n2 3 2\r\n```\r\n\r\n## 样例输出\r\n\r\n```\r\n23\r\n```\r\n\r\n## 样例输入 2\r\n\r\n```\r\n0 0 0\r\n```\r\n\r\n## 样例输出 2\r\n\r\n```\r\n105\r\n```\r\n\r\n## 数据范围\r\n\r\n- 0 ≤ a < 3，0 ≤ b < 5，0 ≤ c < 7\r\n- 判题采用 trim 比对：忽略行末与整体首尾空白，行内空格敏感。\r\n\r\n## 思路提示\r\n\r\n三个模数 3、5、7 两两互质，最小公倍数为 105，因此解在 1..105 内唯一存在，直接从小到大枚举即可。也可用中国剩余定理公式一次算出。\r\n\r\n## 常见错误\r\n\r\n1. 求的是最小正整数，不能输出 0（除非输入全 0 时解为 105，本题按 x=1..105 枚举得 105）\r\n2. 余数可能为 0\r\n3. 注意 a,b,c 的取值范围\r\n",
+    "samples": [
+      {
+        "input": "2 3 2",
+        "output": "23"
+      },
+      {
+        "input": "0 0 0",
+        "output": "105"
+      }
+    ],
+    "test_count": null
+  },
+  {
+    "id": "P36",
+    "title": "迷宫最短通道",
+    "contest_type": "oi",
+    "score": 100,
+    "compare_mode": "trim",
+    "limits": {
+      "time_ms": 1000,
+      "memory_mb": 256
+    },
+    "build": {
+      "mode": "g++",
+      "command": "g++ -O2 -std=c++17 -o {bin} {src}",
+      "src": "main.cpp",
+      "default_filename": "main.cpp",
+      "target": null
+    },
+    "topic": "BFS/最短路",
+    "difficulty": "困难",
+    "language": "C++",
+    "statement_md": "# P36 迷宫最短通道\r\n\r\n> 难度：困难 · 计分：OI · **C++ 语言题**，单文件提交（main.cpp） · 构建：g++ -O2 -std=c++17 · 时限 1000ms / 256MB\r\n\r\n> 题源：情境拓展 ·《趣味数学及编程拓展》7.8 迷宫最短通道。本题题面自包含，无需查阅原卷。\r\n\r\n## 题目背景\r\n\r\n迷宫求解是广度优先搜索的经典应用：把迷宫中的每个可通行格子看作图上的结点，相邻的空格之间有边相连，从起点出发逐层扩展，就能找到到达终点所需步数最少的路线。\r\n\r\n## 输入格式\r\n\r\n第一行两个整数 n m（1 ≤ n,m ≤ 20）。接下来 n 行，每行一个长度为 m 的字符串，字符为 '.'（空地）、'#'（墙）、'S'（起点）、'T'（终点）。输入保证恰有一个 S 和一个 T。\r\n\r\n## 输出格式\r\n\r\n一行，一个整数，表示从 S 到 T 的最少移动步数（每步上下左右移动一格，不能穿墙）；若不可达输出 -1。\r\n\r\n## 样例输入\r\n\r\n```\r\n3 3\r\nS.#\r\n...\r\n#.T\r\n```\r\n\r\n## 样例输出\r\n\r\n```\r\n4\r\n```\r\n\r\n## 样例输入 2\r\n\r\n```\r\n2 2\r\nS.\r\n.T\r\n```\r\n\r\n## 样例输出 2\r\n\r\n```\r\n2\r\n```\r\n\r\n## 数据范围\r\n\r\n- 1 ≤ n,m ≤ 20；迷宫恰有一个 S 和一个 T\r\n- 判题采用 trim 比对：忽略行末与整体首尾空白，行内空格敏感。\r\n\r\n## 思路提示\r\n\r\n从 S 出发做 BFS：队列里存当前坐标，dist 记录步数，每走到一个新格就记 dist+1。因为 BFS 按层扩展，第一次到达 T 时的步数就是最短路。注意越界与墙的判断。\r\n\r\n## 常见错误\r\n\r\n1. 起点终点相邻时答案为 1，S=T 时答案为 0\r\n2. 不可达要输出 -1\r\n3. 输入行是连续字符串，用 cin >> 读取\r\n",
+    "samples": [
+      {
+        "input": "3 3\nS.#\n...\n#.T",
+        "output": "4"
+      },
+      {
+        "input": "2 2\nS.\n.T",
+        "output": "2"
+      }
+    ],
+    "test_count": null
+  },
+  {
+    "id": "P37",
+    "title": "螺旋方阵",
+    "contest_type": "oi",
+    "score": 100,
+    "compare_mode": "trim",
+    "limits": {
+      "time_ms": 1000,
+      "memory_mb": 256
+    },
+    "build": {
+      "mode": "g++",
+      "command": "gcc -O2 -std=c11 -o {bin} {src}",
+      "src": "main.c",
+      "default_filename": "main.c",
+      "target": null
+    },
+    "topic": "二维数组/模拟",
+    "difficulty": "中等",
+    "language": "C",
+    "statement_md": "# P37 螺旋方阵\r\n\r\n> 难度：中等 · 计分：OI · **C 语言题**，单文件提交（main.c） · 构建：gcc -O2 -std=c11 · 时限 1000ms / 256MB\r\n\r\n> 题源：情境拓展 ·《趣味数学及编程拓展》第 8 章 数形结合（螺旋填数）。本题题面自包含，无需查阅原卷。\r\n\r\n## 题目背景\r\n\r\n把 1 到 n² 依次填入 n 阶方阵，从左上角开始先向右、再向下、再向左、再向上，逐圈向内收缩，就得到一个螺旋方阵。这类填数问题考察对二维数组边界的精确控制。\r\n\r\n## 输入格式\r\n\r\n一行，一个整数 n（1 ≤ n ≤ 20）。\r\n\r\n## 输出格式\r\n\r\n输出 n 行，每行 n 个整数（1..n² 各出现一次），同一行相邻整数间用一个空格分隔，行末不留多余空格。\r\n\r\n## 样例输入\r\n\r\n```\r\n4\r\n```\r\n\r\n## 样例输出\r\n\r\n```\r\n1 2 3 4\r\n12 13 14 5\r\n11 16 15 6\r\n10 9 8 7\r\n```\r\n\r\n## 样例输入 2\r\n\r\n```\r\n3\r\n```\r\n\r\n## 样例输出 2\r\n\r\n```\r\n1 2 3\r\n8 9 4\r\n7 6 5\r\n```\r\n\r\n## 数据范围\r\n\r\n- 1 ≤ n ≤ 20\r\n- 判题采用 trim 比对：忽略行末与整体首尾空白，行内空格敏感。\r\n\r\n## 思路提示\r\n\r\n用 top/bottom/left/right 四个边界表示尚未填充的矩形区域，每填完一条边就收缩对应边界，并在收缩后检查是否交叉，避免中心行/列被重复填。\r\n\r\n## 常见错误\r\n\r\n1. n=1 时只填一个 1\r\n2. 奇数阶最后剩中心格，不能在收缩后重复填\r\n3. 行内元素间恰好一个空格\r\n",
+    "samples": [
+      {
+        "input": "4",
+        "output": "1 2 3 4\n12 13 14 5\n11 16 15 6\n10 9 8 7"
+      },
+      {
+        "input": "3",
+        "output": "1 2 3\n8 9 4\n7 6 5"
+      }
+    ],
+    "test_count": null
+  },
+  {
+    "id": "P38",
+    "title": "数字三角形取最大和",
+    "contest_type": "oi",
+    "score": 100,
+    "compare_mode": "trim",
+    "limits": {
+      "time_ms": 1000,
+      "memory_mb": 256
+    },
+    "build": {
+      "mode": "g++",
+      "command": "g++ -O2 -std=c++17 -o {bin} {src}",
+      "src": "main.cpp",
+      "default_filename": "main.cpp",
+      "target": null
+    },
+    "topic": "动态规划/递推",
+    "difficulty": "困难",
+    "language": "C++",
+    "statement_md": "# P38 数字三角形取最大和\r\n\r\n> 难度：困难 · 计分：OI · **C++ 语言题**，单文件提交（main.cpp） · 构建：g++ -O2 -std=c++17 · 时限 1000ms / 256MB\r\n\r\n> 题源：情境拓展 ·《趣味数学及编程拓展》5.3.1 巧妙建模（数字三角形）。本题题面自包含，无需查阅原卷。\r\n\r\n## 题目背景\r\n\r\n数字三角形中，从顶端出发每次只能向左下或右下走一步，直到落到底边。如何选出一条路径使沿途数字之和最大？自底向上逐层合并，可以把指数级的枚举压缩成一次线性递推。\r\n\r\n## 输入格式\r\n\r\n第一行一个整数 n（1 ≤ n ≤ 100）。接下来 n 行，第 i 行有 i 个整数，表示数字三角形第 i 行的元素。\r\n\r\n## 输出格式\r\n\r\n一行，一个整数，表示从顶部走到底部路径上数字之和的最大值。\r\n\r\n## 样例输入\r\n\r\n```\r\n5\r\n7\r\n3 8\r\n8 1 0\r\n2 7 4 4\r\n4 5 2 6 5\r\n```\r\n\r\n## 样例输出\r\n\r\n```\r\n30\r\n```\r\n\r\n## 样例输入 2\r\n\r\n```\r\n3\r\n1\r\n2 3\r\n4 5 6\r\n```\r\n\r\n## 样例输出 2\r\n\r\n```\r\n10\r\n```\r\n\r\n## 数据范围\r\n\r\n- 1 ≤ n ≤ 100，|a[i][j]| ≤ 1000\r\n- 判题采用 trim 比对：忽略行末与整体首尾空白，行内空格敏感。\r\n\r\n## 思路提示\r\n\r\n自底向上做动态规划：dp[j] 表示从当前行第 j 列走到底的最大和。从最后一行往上递推，dp[j] = a[i][j] + max(dp[j], dp[j+1])，只需一维数组。\r\n\r\n## 常见错误\r\n\r\n1. 数字可能为负，dp 初值不能设为 0（自底向上第一行直接由 a 赋值，无此问题）\r\n2. 第 i 行有 i 个数，输入格式要按行读\r\n3. 结果可能超过 int，用 long long\r\n",
+    "samples": [
+      {
+        "input": "5\n7\n3 8\n8 1 0\n2 7 4 4\n4 5 2 6 5",
+        "output": "30"
+      },
+      {
+        "input": "3\n1\n2 3\n4 5 6",
+        "output": "10"
       }
     ],
     "test_count": null

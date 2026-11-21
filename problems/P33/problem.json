@@ -1,0 +1,18 @@
+{
+  "id": "P33",
+  "title": "哥德巴赫配对",
+  "topic": "数论/筛法/双指针",
+  "difficulty": "中等",
+  "language": "C++",
+  "contest_type": "acm",
+  "build": {
+    "command": "g++ -O2 -std=c++17 -o {bin} {src}",
+    "src": "main.cpp"
+  },
+  "limits": {
+    "time_ms": 2000,
+    "memory_mb": 256
+  },
+  "score": 100,
+  "compare_mode": "trim"
+}

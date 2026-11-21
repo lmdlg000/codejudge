@@ -1,0 +1,18 @@
+{
+  "id": "P36",
+  "title": "迷宫最短通道",
+  "topic": "BFS/最短路",
+  "difficulty": "困难",
+  "language": "C++",
+  "contest_type": "oi",
+  "build": {
+    "command": "g++ -O2 -std=c++17 -o {bin} {src}",
+    "src": "main.cpp"
+  },
+  "limits": {
+    "time_ms": 1000,
+    "memory_mb": 256
+  },
+  "score": 100,
+  "compare_mode": "trim"
+}
